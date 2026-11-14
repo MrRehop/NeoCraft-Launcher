@@ -96,7 +96,7 @@ class MainActivity : Activity() {
                         is GameBuildMatch.Supported -> "подтверждена (${match.build.buildId})"
                         is GameBuildMatch.Unknown -> "не подтверждена\nПричина: ${match.reason}"
                     } +
-                    "\n\nХеши APK пока не собираются."
+                    "\n\nSHA-256 APK и структура архива доступны в скопированном отчёте."
                 findCopyButton()?.isEnabled = true
             }
             is GameDiscoveryResult.NotInstalled -> {
