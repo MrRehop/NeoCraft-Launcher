@@ -14,10 +14,24 @@ import org.neocraft.neomod.android.AndroidGameDiscovery
 import org.neocraft.neomod.android.GameDiscoveryResult
 import org.neocraft.neomod.core.GameBuildMatch
 import org.neocraft.neomod.core.ReviewedGameBuilds
+import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
     private lateinit var status: TextView
+    private lateinit var checkButton: Button
+    private lateinit var copyButton: Button
     private var diagnosticReport: String? = null
+    private val inspectionExecutor = Executors.newSingleThreadExecutor()
+    private var inspectionToken = 0
+
+    private companion object {
+        const val MAX_DEX_BYTES = 64 * 1024 * 1024
+        const val MAX_DEX_FILES = 8
+        const val MAX_DEX_STRINGS = 1_000_000
+        const val MAX_DEX_TYPES = 250_000
+        const val MAX_DEX_CLASSES = 150_000
+        const val MAX_DEX_METHODS = 200_000
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,15 +52,14 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(0, padding, 0, padding)
         }
-        val check = Button(this).apply {
+        checkButton = Button(this).apply {
             text = "Проверить Minecraft"
             setOnClickListener { inspectGame() }
         }
-        val copy = Button(this).apply {
+        copyButton = Button(this).apply {
             text = "Скопировать диагностику"
             isEnabled = false
             setOnClickListener { copyDiagnostics() }
-            tag = "diagnostics_copy"
         }
         val mods = Button(this).apply {
             text = "NeoMod — скоро"
@@ -54,62 +67,87 @@ class MainActivity : Activity() {
         }
         layout.addView(title)
         layout.addView(status)
-        layout.addView(check)
-        layout.addView(copy)
+        layout.addView(checkButton)
+        layout.addView(copyButton)
         layout.addView(mods)
         setContentView(layout)
     }
 
     private fun inspectGame() {
         diagnosticReport = null
-        findCopyButton()?.isEnabled = false
-        status.text = "Проверка…"
-        when (val result = AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")) {
-            is GameDiscoveryResult.Found -> {
-                val game = result.fingerprint
-                val signers = game.signingCertificateSha256.orEmpty().sorted()
-                val match = ReviewedGameBuilds.registry.match(game)
-                val compatibility = when (match) {
-                    is GameBuildMatch.Supported -> "ПОДТВЕРЖДЕНА: ${match.build.buildId}"
-                    is GameBuildMatch.Unknown -> "НЕ ПОДТВЕРЖДЕНА: ${match.reason}"
-                }
-                diagnosticReport = buildString {
-                    appendLine("NeoCraft diagnostic report")
-                    appendLine("Package: ${game.packageName}")
-                    appendLine("Version name: ${game.versionName ?: "unknown"}")
-                    appendLine("Version code: ${game.versionCode}")
-                    appendLine("Current signer SHA-256:")
-                    if (signers.isEmpty()) appendLine("unavailable")
-                    else signers.forEach(::appendLine)
-                    appendLine("Artifact digests:")
-                    if (game.artifactDigests.isEmpty()) appendLine("unavailable (Android did not expose readable APK paths)")
-                    else game.artifactDigests.toSortedMap().forEach { (name, digest) -> appendLine("$name SHA-256: $digest") }
-                    appendLine("NeoMod compatibility: $compatibility")
-                    appendLine("APK structure:")
-                    inspectApkStructure(game.packageName).forEach(::appendLine)
-                }
-                status.text = "Minecraft найдена\nВерсия: ${game.versionName ?: "неизвестна"}" +
-                    "\nversionCode: ${game.versionCode}" +
-                    "\nSHA-256 сертификата: ${signers.joinToString() .ifEmpty { "нет данных" }}" +
-                    "\n\nСовместимость NeoCraft: " +
-                    when (match) {
-                        is GameBuildMatch.Supported -> "подтверждена (${match.build.buildId})"
-                        is GameBuildMatch.Unknown -> "не подтверждена\nПричина: ${match.reason}"
-                    } +
-                    "\n\nSHA-256 APK и структура архива доступны в скопированном отчёте."
-                findCopyButton()?.isEnabled = true
+        copyButton.isEnabled = false
+        checkButton.isEnabled = false
+        status.text = "Проверка Minecraft и анализ APK…"
+        val request = ++inspectionToken
+
+        inspectionExecutor.execute {
+            val result = try {
+                AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")
+            } catch (error: Exception) {
+                GameDiscoveryResult.Unknown(
+                    "Unexpected diagnostic error: \${error.message ?: error.javaClass.simpleName}"
+                )
             }
-            is GameDiscoveryResult.NotInstalled -> {
-                diagnosticReport = "NeoCraft diagnostic report\nPackage: ${result.packageName}\nStatus: not installed"
-                status.text = "Minecraft не найдена: ${result.packageName}"
-                findCopyButton()?.isEnabled = true
+
+            val (report, display) = when (result) {
+                is GameDiscoveryResult.Found -> {
+                    val game = result.fingerprint
+                    val signers = game.signingCertificateSha256.orEmpty().sorted()
+                    val match = ReviewedGameBuilds.registry.match(game)
+                    val compatibility = when (match) {
+                        is GameBuildMatch.Supported -> "ПОДТВЕРЖДЕНА: \${match.build.buildId}"
+                        is GameBuildMatch.Unknown -> "НЕ ПОДТВЕРЖДЕНА: \${match.reason}"
+                    }
+                    val reportText = buildString {
+                        appendLine("NeoCraft diagnostic report")
+                        appendLine("Package: \${game.packageName}")
+                        appendLine("Version name: \${game.versionName ?: "unknown"}")
+                        appendLine("Version code: \${game.versionCode}")
+                        appendLine("Current signer SHA-256:")
+                        if (signers.isEmpty()) appendLine("unavailable")
+                        else signers.forEach(::appendLine)
+                        appendLine("Artifact digests:")
+                        if (game.artifactDigests.isEmpty()) appendLine("unavailable (Android did not expose readable APK paths)")
+                        else game.artifactDigests.toSortedMap().forEach { (name, digest) -> appendLine("\$name SHA-256: \$digest") }
+                        appendLine("NeoMod compatibility: \$compatibility")
+                        appendLine("APK structure:")
+                        inspectApkStructure(game.packageName).forEach(::appendLine)
+                    }
+                    val displayText = "Minecraft найдена\nВерсия: \${game.versionName ?: "неизвестна"}" +
+                        "\nversionCode: \${game.versionCode}" +
+                        "\nSHA-256 сертификата: \${signers.joinToString().ifEmpty { "нет данных" }}" +
+                        "\n\nСовместимость NeoCraft: " +
+                        when (match) {
+                            is GameBuildMatch.Supported -> "подтверждена (\${match.build.buildId})"
+                            is GameBuildMatch.Unknown -> "не подтверждена\nПричина: \${match.reason}"
+                        } +
+                        "\n\nSHA-256 APK и структура архива доступны в скопированном отчёте."
+                    reportText to displayText
+                }
+                is GameDiscoveryResult.NotInstalled -> {
+                    "NeoCraft diagnostic report\nPackage: \${result.packageName}\nStatus: not installed" to
+                        "Minecraft не найдена: \${result.packageName}"
+                }
+                is GameDiscoveryResult.Unknown -> {
+                    "NeoCraft diagnostic report\nStatus: unknown\nReason: \${result.reason}" to
+                        "Не удалось проверить Minecraft:\n\${result.reason}"
+                }
             }
-            is GameDiscoveryResult.Unknown -> {
-                diagnosticReport = "NeoCraft diagnostic report\nStatus: unknown\nReason: ${result.reason}"
-                status.text = "Не удалось проверить Minecraft:\n${result.reason}"
-                findCopyButton()?.isEnabled = true
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                diagnosticReport = report
+                status.text = display
+                copyButton.isEnabled = true
+                checkButton.isEnabled = true
             }
         }
+    }
+
+    override fun onDestroy() {
+        inspectionToken++
+        inspectionExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     private fun inspectApkStructure(packageName: String): List<String> {
@@ -149,8 +187,12 @@ class MainActivity : Activity() {
                     output += "DEX entries: ${dex.sorted().joinToString().ifEmpty { "none listed" }}"
                     output += "Native libraries: ${native.sorted().joinToString().ifEmpty { "none listed" }}"
                     output += "Asset top-level entries: ${assetRoots.joinToString().ifEmpty { "none listed" }}"
-                    dex.sorted().forEach { dexName ->
+                    val dexNames = dex.sorted()
+                    dexNames.take(MAX_DEX_FILES).forEach { dexName ->
                         output += inspectDexClasses(zip, dexName)
+                    }
+                    if (dexNames.size > MAX_DEX_FILES) {
+                        output += "DEX scan limited to the first $MAX_DEX_FILES files; ${dexNames.size - MAX_DEX_FILES} additional DEX files were skipped"
                     }
                     output += inspectAndroidComponents(packageName)
                 }
@@ -163,7 +205,23 @@ class MainActivity : Activity() {
 
     private fun inspectDexClasses(zip: java.util.zip.ZipFile, dexName: String): String {
         return try {
-            val bytes = zip.getInputStream(zip.getEntry(dexName)).use { it.readBytes() }
+            val dexEntry = zip.getEntry(dexName) ?: error("DEX entry is missing")
+            require(dexEntry.size < 0L || dexEntry.size <= MAX_DEX_BYTES.toLong()) {
+                "DEX entry exceeds the ${MAX_DEX_BYTES}-byte inspection limit"
+            }
+            val bytes = zip.getInputStream(dexEntry).use { input ->
+                val output = java.io.ByteArrayOutputStream()
+                val chunk = ByteArray(8192)
+                var total = 0
+                while (true) {
+                    val count = input.read(chunk)
+                    if (count < 0) break
+                    total += count
+                    require(total <= MAX_DEX_BYTES) { "DEX entry exceeds the inspection limit" }
+                    output.write(chunk, 0, count)
+                }
+                output.toByteArray()
+            }
             val buffer = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
             fun readInt(offset: Int): Int {
                 require(offset >= 0 && offset <= bytes.size - 4) { "DEX offset out of bounds" }
@@ -189,7 +247,9 @@ class MainActivity : Activity() {
             val typeOffset = readInt(68)
             val classCount = readInt(96)
             val classOffset = readInt(100)
-            require(stringCount in 0..2_000_000 && typeCount in 0..2_000_000 && classCount in 0..2_000_000) { "Invalid DEX table sizes" }
+            require(stringCount in 0..MAX_DEX_STRINGS && typeCount in 0..MAX_DEX_TYPES && classCount in 0..MAX_DEX_CLASSES) {
+                "DEX table sizes exceed safe inspection limits"
+            }
             val cache = HashMap<Int, String>()
             fun stringAt(index: Int): String = cache.getOrPut(index) {
                 require(index in 0 until stringCount) { "Invalid string index" }
@@ -217,7 +277,7 @@ class MainActivity : Activity() {
             try {
                 val methodCount = readInt(88)
                 val methodOffset = readInt(92)
-                require(methodCount in 0..2_000_000) { "Invalid DEX method table size" }
+                require(methodCount in 0..MAX_DEX_METHODS) { "DEX method table exceeds safe inspection limits" }
                 val owners = HashMap<Int, String>()
                 for (i in 0 until classCount) {
                     val classIndex = readInt(classOffset + i * 32)
@@ -336,23 +396,6 @@ class MainActivity : Activity() {
         } catch (error: Exception) {
             "Android component scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
         }
-    }
-
-    private fun findCopyButton(): Button? {
-        val root = (findViewById<android.view.View>(android.R.id.content) as? android.view.ViewGroup)
-        return findButtonByTag(root)
-    }
-
-    private fun findButtonByTag(group: android.view.ViewGroup?): Button? {
-        if (group == null) return null
-        for (index in 0 until group.childCount) {
-            val child = group.getChildAt(index)
-            if (child is Button && child.tag == "diagnostics_copy") return child
-            if (child is android.view.ViewGroup) {
-                findButtonByTag(child)?.let { return it }
-            }
-        }
-        return null
     }
 
     private fun copyDiagnostics() {
