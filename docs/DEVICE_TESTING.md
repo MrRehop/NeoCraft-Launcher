@@ -2,13 +2,13 @@
 
 ## Current build
 
-The first debug APK was built by GitHub Actions workflow run [#27](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43575756710) on 2026-11-14. The uploaded artifact is named `neocraft-debug-apk`.
+The latest debug APK was built by GitHub Actions workflow run [#32](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43607196864) on 2026-11-14. The uploaded artifact is named `neocraft-debug-apk`.
 
-The artifact is temporary and is scheduled to expire on 2027-02-12. A later successful workflow run will create a new artifact.
+The artifact is temporary and is scheduled to expire on 2027-02-12. A later successful workflow run will create a newer artifact.
 
 ## Install on the Samsung Android device
 
-1. Open the [successful build run](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43575756710).
+1. Open the [latest successful build run](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43607196864).
 2. Scroll to **Artifacts** and download **neocraft-debug-apk**.
 3. Open the downloaded ZIP and extract `app-debug.apk`.
 4. Tap `app-debug.apk`. If Android asks, allow the file manager or browser to install this APK. Only grant this permission to the app you used to download the project artifact; you can revoke it afterward.
@@ -19,7 +19,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched for this test.
 ## Collect the game identity report
 
 1. In NeoCraft, tap **Проверить Minecraft**.
-2. Wait for the result.
+2. Wait for the result. APK and DEX inspection runs in a background worker; unusually large DEX files or tables are skipped at configured safety limits.
 3. Tap **Скопировать диагностику**.
 4. Paste the complete copied report into the NeoCraft development conversation.
 
