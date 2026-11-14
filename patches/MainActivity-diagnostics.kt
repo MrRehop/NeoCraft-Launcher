@@ -237,6 +237,8 @@ class MainActivity : Activity() {
         }
     }
 
+    }
+
     private fun findCopyButton(): Button? {
         val root = (findViewById<android.view.View>(android.R.id.content) as? android.view.ViewGroup)
         return findButtonByTag(root)
