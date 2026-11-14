@@ -18,6 +18,11 @@ jobs:
         run: unzip -q NeoCraft-NeoMod-Stage9-clean.zip -d .
       - name: Apply Android module dependency fix
         run: cp patches/android-integration-build.gradle.kts NeoCraft/android-integration/build.gradle.kts
+      - name: Apply reviewed build registry and launcher UI
+        run: |
+          mkdir -p NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core
+          cp patches/ReviewedGameBuilds.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/ReviewedGameBuilds.kt
+          cp patches/MainActivity.kt NeoCraft/app/src/main/java/org/neocraft/launcher/MainActivity.kt
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
