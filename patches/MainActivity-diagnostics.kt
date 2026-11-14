@@ -215,7 +215,7 @@ class MainActivity : Activity() {
             val mojangSample = classNames.filter { it.startsWith("com.mojang.") || it.startsWith("net.minecraft.") }.take(40)
             dexName + " defined classes: " + classNames.size +
                 "\n" + dexName + " package prefixes: " + packageCounts.joinToString { it.key + " (" + it.value + ")" }.ifEmpty { "none" } +
-                "\\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" }
+                "\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" }
         } catch (error: Exception) {
             dexName + " class scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
         }
