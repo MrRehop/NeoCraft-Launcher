@@ -81,7 +81,9 @@ class MainActivity : Activity() {
                     appendLine("Current signer SHA-256:")
                     if (signers.isEmpty()) appendLine("unavailable")
                     else signers.forEach(::appendLine)
-                    appendLine("Artifact digests: not collected")
+                    appendLine("Artifact digests:")
+                    if (game.artifactDigests.isEmpty()) appendLine("unavailable (Android did not expose readable APK paths)")
+                    else game.artifactDigests.toSortedMap().forEach { (name, digest) -> appendLine("$name SHA-256: $digest") }
                     appendLine("NeoMod compatibility: $compatibility")
                 }
                 status.text = "Minecraft найдена\nВерсия: ${game.versionName ?: "неизвестна"}" +
