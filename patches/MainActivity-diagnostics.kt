@@ -212,6 +212,7 @@ class MainActivity : Activity() {
             }
             var nativeMethodCount = 0
             val nativeMethodSample = mutableListOf<String>()
+            val relevantNativeMethodSample = mutableListOf<String>()
             try {
                 val methodCount = readInt(88)
                 val methodOffset = readInt(92)
@@ -240,8 +241,11 @@ class MainActivity : Activity() {
                             val ownerIndex = buffer.getShort(item).toInt() and 0xffff
                             val nameIndex = readInt(item + 4)
                             nativeMethodCount++
-                            if (nativeMethodSample.size < 100) {
-                                nativeMethodSample += (owners[ownerIndex] ?: "type#$ownerIndex") + "." + stringAt(nameIndex)
+                            val owner = owners[ownerIndex] ?: "type#$ownerIndex"
+                            val method = owner + "." + stringAt(nameIndex)
+                            if (nativeMethodSample.size < 100) nativeMethodSample += method
+                            if ((owner.startsWith("com.mojang.") || owner.startsWith("net.minecraft.") || owner.startsWith("com.modscraft.")) && relevantNativeMethodSample.size < 200) {
+                                relevantNativeMethodSample += method
                             }
                         }
                     }
@@ -270,6 +274,7 @@ class MainActivity : Activity() {
                 }
             } catch (error: Exception) {
                 nativeMethodSample.clear()
+                relevantNativeMethodSample.clear()
                 nativeMethodSample += "Native method scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
                 nativeMethodCount = -1
             }
@@ -280,7 +285,9 @@ class MainActivity : Activity() {
                 "\n" + dexName + " package prefixes: " + packageCounts.joinToString { it.key + " (" + it.value + ")" }.ifEmpty { "none" } +
                 "\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" } +
                 "\n" + dexName + " native methods: " + if (nativeMethodCount < 0) nativeMethodSample.joinToString() else nativeMethodCount.toString() +
-                "\n" + dexName + " native method sample: " + nativeMethodSample.joinToString().ifEmpty { "none found" }
+                "\n" + dexName + " native method sample (first 100): " + nativeMethodSample.joinToString().ifEmpty { "none found" } +
+                "\n" + dexName + " Mojang/Minecraft/modscraft native methods: " + relevantNativeMethodSample.joinToString().ifEmpty { "none found in scanned owners" } +
+                "\n" + dexName + " modscraft/amogus class sample: " + classNames.filter { it.startsWith("com.modscraft.") || it.startsWith("amogus.") }.take(100).joinToString().ifEmpty { "none found" }
         } catch (error: Exception) {
             dexName + " class scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
         }
