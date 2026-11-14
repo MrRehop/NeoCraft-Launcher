@@ -108,8 +108,8 @@ class MainActivity : Activity() {
                         else signers.forEach(::appendLine)
                         appendLine("Artifact digests:")
                         if (game.artifactDigests.isEmpty()) appendLine("unavailable (Android did not expose readable APK paths)")
-                        else game.artifactDigests.toSortedMap().forEach { (name, digest) -> appendLine("\$name SHA-256: \$digest") }
-                        appendLine("NeoMod compatibility: \$compatibility")
+                        else game.artifactDigests.toSortedMap().forEach { (name, digest) -> appendLine("$name SHA-256: $digest") }
+                        appendLine("NeoMod compatibility: $compatibility")
                         appendLine("APK structure:")
                         inspectApkStructure(game.packageName).forEach(::appendLine)
                     }
