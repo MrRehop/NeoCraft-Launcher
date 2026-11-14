@@ -149,6 +149,10 @@ class MainActivity : Activity() {
                     output += "DEX entries: ${dex.sorted().joinToString().ifEmpty { "none listed" }}"
                     output += "Native libraries: ${native.sorted().joinToString().ifEmpty { "none listed" }}"
                     output += "Asset top-level entries: ${assetRoots.joinToString().ifEmpty { "none listed" }}"
+                    dex.sorted().forEach { dexName ->
+                        output += inspectDexClasses(zip, dexName)
+                    }
+                    output += inspectAndroidComponents(packageName)
                 }
             } catch (error: Exception) {
                 output += "ZIP inspection failed: ${error.javaClass.simpleName}: ${error.message ?: "no details"}"
@@ -157,7 +161,83 @@ class MainActivity : Activity() {
         return output
     }
 
-    private fun findCopyButton(): Button? {
+    private fun inspectDexClasses(zip: java.util.zip.ZipFile, dexName: String): String {
+        return try {
+            val bytes = zip.getInputStream(zip.getEntry(dexName)).use { it.readBytes() }
+            val buffer = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+            fun readInt(offset: Int): Int {
+                require(offset >= 0 && offset <= bytes.size - 4) { "DEX offset out of bounds" }
+                return buffer.getInt(offset)
+            }
+            fun readUleb(offset: Int): Pair<Int, Int> {
+                var value = 0
+                var shift = 0
+                var cursor = offset
+                while (shift < 35) {
+                    require(cursor in bytes.indices) { "ULEB128 out of bounds" }
+                    val b = bytes[cursor++].toInt() and 0xff
+                    value = value or ((b and 0x7f) shl shift)
+                    if ((b and 0x80) == 0) return value to cursor
+                    shift += 7
+                }
+                error("Invalid ULEB128")
+            }
+            require(bytes.size >= 112 && String(bytes, 0, 4, Charsets.US_ASCII) == "dex\\n") { "Invalid DEX header" }
+            val stringCount = readInt(56)
+            val stringOffset = readInt(60)
+            val typeCount = readInt(64)
+            val typeOffset = readInt(68)
+            val classCount = readInt(96)
+            val classOffset = readInt(100)
+            require(stringCount in 0..2_000_000 && typeCount in 0..2_000_000 && classCount in 0..2_000_000) { "Invalid DEX table sizes" }
+            val cache = HashMap<Int, String>()
+            fun stringAt(index: Int): String = cache.getOrPut(index) {
+                require(index in 0 until stringCount) { "Invalid string index" }
+                val dataOffset = readInt(stringOffset + index * 4)
+                val (_, start) = readUleb(dataOffset)
+                var end = start
+                while (end < bytes.size && bytes[end].toInt() != 0) end++
+                require(end < bytes.size) { "Unterminated DEX string" }
+                String(bytes, start, end - start, Charsets.UTF_8)
+            }
+            val classNames = sortedSetOf<String>()
+            for (i in 0 until classCount) {
+                val classIndex = readInt(classOffset + i * 32)
+                require(classIndex in 0 until typeCount) { "Invalid class type index" }
+                val descriptorIndex = readInt(typeOffset + classIndex * 4)
+                val descriptor = stringAt(descriptorIndex)
+                if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
+                    classNames += descriptor.substring(1, descriptor.length - 1).replace("/", ".")
+                }
+            }
+            val packageCounts = classNames.mapNotNull { it.substringBeforeLast(".", "").takeIf { p -> p.isNotBlank() } }
+                .groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(15)
+            val mojangSample = classNames.filter { it.startsWith("com.mojang.") || it.startsWith("net.minecraft.") }.take(40)
+            dexName + " defined classes: " + classNames.size +
+                "\\n" + dexName + " package prefixes: " + packageCounts.joinToString { it.key + " (" + it.value + ")" }.ifEmpty { "none" } +
+                "\\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" }
+        } catch (error: Exception) {
+            dexName + " class scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
+        }
+    }
+
+    private fun inspectAndroidComponents(packageName: String): String {
+        return try {
+            @Suppress("DEPRECATION")
+            val info = packageManager.getPackageInfo(packageName, android.content.pm.PackageManager.GET_ACTIVITIES or android.content.pm.PackageManager.GET_SERVICES or android.content.pm.PackageManager.GET_RECEIVERS or android.content.pm.PackageManager.GET_PROVIDERS or android.content.pm.PackageManager.GET_PERMISSIONS)
+            val lines = mutableListOf<String>()
+            lines += "Android activities: " + (info.activities?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
+            lines += "Android services: " + (info.services?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
+            lines += "Android receivers: " + (info.receivers?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
+            lines += "Android providers: " + (info.providers?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
+            lines += "Requested permissions: " + (info.requestedPermissions?.sorted()?.joinToString()?.ifEmpty { "none listed" } ?: "none listed")
+            lines.joinToString("\\n")
+        } catch (error: Exception) {
+            "Android component scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
+        }
+    }
+
+    private fun findCopyButton(): Button? {    private fun findCopyButton(): Button? {
         val root = (findViewById<android.view.View>(android.R.id.content) as? android.view.ViewGroup)
         return findButtonByTag(root)
     }
