@@ -259,7 +259,16 @@ class MainActivity : Activity() {
                                     val outs = buffer.getShort(codeOffset + 4).toInt() and 0xffff
                                     val tries = buffer.getShort(codeOffset + 6).toInt() and 0xffff
                                     val instructionUnits = readInt(codeOffset + 12)
-                                    "codeOff=$codeOffset registers=$registers ins=$ins outs=$outs tries=$tries instructionUnits=$instructionUnits"
+                                    require(instructionUnits in 0..65536) { "Invalid DEX instruction count" }
+                                    require(codeOffset >= 0 && codeOffset <= bytes.size - 16 &&
+                                        instructionUnits <= (bytes.size - codeOffset - 16) / 2) { "DEX code item out of bounds" }
+                                    val dumpUnits = minOf(instructionUnits, 128)
+                                    val rawInstructions = (0 until dumpUnits).joinToString(" ") { index ->
+                                        (buffer.getShort(codeOffset + 16 + index * 2).toInt() and 0xffff)
+                                            .toString(16).padStart(4, '0')
+                                    }
+                                    val dumpSuffix = if (instructionUnits > dumpUnits) " … (truncated)" else ""
+                                    "codeOff=$codeOffset registers=$registers ins=$ins outs=$outs tries=$tries instructionUnits=$instructionUnits rawCodeUnits[$dumpUnits]=$rawInstructions$dumpSuffix"
                                 } catch (error: Exception) {
                                     "code metadata unavailable: " + error.javaClass.simpleName
                                 }
