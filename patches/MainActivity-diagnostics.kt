@@ -232,7 +232,7 @@ class MainActivity : Activity() {
                     repeat(size) {
                         val (diff, p1) = readUleb(cursor)
                         val (flags, p2) = readUleb(p1)
-                        val (_, p3) = readUleb(p2)
+                        val (codeOffset, p3) = readUleb(p2)
                         cursor = p3
                         methodIndex += diff
                         require(methodIndex in 0 until methodCount) { "Invalid DEX method index" }
@@ -250,7 +250,21 @@ class MainActivity : Activity() {
                             }
                         }
                         if ((owner == "com.modscraft.mcpepatch.Patches" || owner == "com.modscraft.mcpepatch.KillerApplication") && patchClassMethodSample.size < 200) {
-                            patchClassMethodSample += method + " [access=0x" + flags.toString(16) + "]"
+                            val codeInfo = if (codeOffset == 0) {
+                                "no code body"
+                            } else {
+                                try {
+                                    val registers = buffer.getShort(codeOffset).toInt() and 0xffff
+                                    val ins = buffer.getShort(codeOffset + 2).toInt() and 0xffff
+                                    val outs = buffer.getShort(codeOffset + 4).toInt() and 0xffff
+                                    val tries = buffer.getShort(codeOffset + 6).toInt() and 0xffff
+                                    val instructionUnits = readInt(codeOffset + 12)
+                                    "codeOff=$codeOffset registers=$registers ins=$ins outs=$outs tries=$tries instructionUnits=$instructionUnits"
+                                } catch (error: Exception) {
+                                    "code metadata unavailable: " + error.javaClass.simpleName
+                                }
+                            }
+                            patchClassMethodSample += method + " [access=0x" + flags.toString(16) + ", $codeInfo]"
                         }
                     }
                 }
