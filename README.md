@@ -10,8 +10,10 @@ The repository-level GitHub Actions workflow at [`.github/workflows/android-apk.
 
 ## Current verified status
 
-- The Android debug APK build completed successfully in workflow run [#27](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43575756710) on 2026-11-14.
-- The run uploaded the `neocraft-debug-apk` artifact (869,744 bytes; artifact expiry: 2027-02-12).
+- Latest successful Android debug build: [workflow run #32](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43607196864), completed on 2026-11-14.
+- The run uploaded `neocraft-debug-apk` (871,746-byte ZIP artifact; expires 2027-02-12).
+- The latest build moves APK/DEX inspection off the UI thread and applies explicit DEX inspection limits.
+- PackageManager signer retrieval includes the API 23–27 legacy flag path.
 - The APK has not yet been installed or runtime-tested on a physical device.
 - The reviewed game-build allow-list is intentionally empty. Detecting Minecraft does not mean NeoMod compatibility is confirmed.
 - NeoMod package validation and launcher-side management are in development; no in-game mod injection or resource loading is claimed.
@@ -19,4 +21,4 @@ The repository-level GitHub Actions workflow at [`.github/workflows/android-apk.
 
 ## Device test
 
-See [`docs/DEVICE_TESTING.md`](./docs/DEVICE_TESTING.md) for downloading the debug artifact, installing it on Android, and sending the diagnostic report back for review.
+See [`docs/DEVICE_TESTING.md`](./docs/DEVICE_TESTING.md) for downloading the latest debug artifact, installing it on Android, and sending the diagnostic report back for review.
