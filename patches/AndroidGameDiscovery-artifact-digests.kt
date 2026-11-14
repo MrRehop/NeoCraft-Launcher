@@ -55,10 +55,23 @@ class AndroidGameDiscovery(private val context: Context) {
     @Suppress("DEPRECATION")
     private fun getPackageInfo(packageName: String): PackageInfo {
         val pm = context.packageManager
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            pm.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong()))
-        } else {
-            pm.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        return when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+                pm.getPackageInfo(
+                    packageName,
+                    PackageManager.PackageInfoFlags.of(
+                        PackageManager.GET_SIGNING_CERTIFICATES.toLong()
+                    ),
+                )
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P -> {
+                pm.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            }
+            else -> {
+                // GET_SIGNING_CERTIFICATES was introduced in API 28.
+                // API 23–27 must use the legacy flag to populate signatures.
+                pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+            }
         }
     }
 
