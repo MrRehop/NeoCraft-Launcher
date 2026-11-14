@@ -210,12 +210,77 @@ class MainActivity : Activity() {
                     classNames += descriptor.substring(1, descriptor.length - 1).replace("/", ".")
                 }
             }
+            var nativeMethodCount = 0
+            val nativeMethodSample = mutableListOf<String>()
+            try {
+                val methodCount = readInt(88)
+                val methodOffset = readInt(92)
+                require(methodCount in 0..2_000_000) { "Invalid DEX method table size" }
+                val owners = HashMap<Int, String>()
+                for (i in 0 until classCount) {
+                    val classIndex = readInt(classOffset + i * 32)
+                    val descriptor = stringAt(readInt(typeOffset + classIndex * 4))
+                    if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
+                        owners[classIndex] = descriptor.substring(1, descriptor.length - 1).replace("/", ".")
+                    }
+                }
+                fun scanMethods(start: Int, size: Int) {
+                    var cursor = start
+                    var methodIndex = 0
+                    repeat(size) {
+                        val (diff, p1) = readUleb(cursor)
+                        val (flags, p2) = readUleb(p1)
+                        val (_, p3) = readUleb(p2)
+                        cursor = p3
+                        methodIndex += diff
+                        if ((flags and 0x100) != 0) {
+                            require(methodIndex in 0 until methodCount) { "Invalid native method index" }
+                            val item = methodOffset + methodIndex * 8
+                            require(item >= 0 && item <= bytes.size - 8) { "DEX method item out of bounds" }
+                            val ownerIndex = buffer.getShort(item).toInt() and 0xffff
+                            val nameIndex = readInt(item + 4)
+                            nativeMethodCount++
+                            if (nativeMethodSample.size < 100) {
+                                nativeMethodSample += (owners[ownerIndex] ?: "type#$ownerIndex") + "." + stringAt(nameIndex)
+                            }
+                        }
+                    }
+                }
+                for (i in 0 until classCount) {
+                    val dataOffset = readInt(classOffset + i * 32 + 24)
+                    if (dataOffset == 0) continue
+                    var cursor = dataOffset
+                    val (staticFields, p1) = readUleb(cursor); cursor = p1
+                    val (instanceFields, p2) = readUleb(cursor); cursor = p2
+                    val (directMethods, p3) = readUleb(cursor); cursor = p3
+                    val (virtualMethods, p4) = readUleb(cursor); cursor = p4
+                    repeat(staticFields + instanceFields) {
+                        val (_, pA) = readUleb(cursor)
+                        val (_, pB) = readUleb(pA)
+                        cursor = pB
+                    }
+                    scanMethods(cursor, directMethods)
+                    repeat(directMethods) {
+                        val (_, pA) = readUleb(cursor)
+                        val (_, pB) = readUleb(pA)
+                        val (_, pC) = readUleb(pB)
+                        cursor = pC
+                    }
+                    scanMethods(cursor, virtualMethods)
+                }
+            } catch (error: Exception) {
+                nativeMethodSample.clear()
+                nativeMethodSample += "Native method scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
+                nativeMethodCount = -1
+            }
             val packageCounts = classNames.mapNotNull { it.substringBeforeLast(".", "").takeIf { p -> p.isNotBlank() } }
                 .groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(15)
             val mojangSample = classNames.filter { it.startsWith("com.mojang.") || it.startsWith("net.minecraft.") }.take(40)
             dexName + " defined classes: " + classNames.size +
                 "\n" + dexName + " package prefixes: " + packageCounts.joinToString { it.key + " (" + it.value + ")" }.ifEmpty { "none" } +
-                "\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" }
+                "\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" } +
+                "\n" + dexName + " native methods: " + if (nativeMethodCount < 0) nativeMethodSample.joinToString() else nativeMethodCount.toString() +
+                "\n" + dexName + " native method sample: " + nativeMethodSample.joinToString().ifEmpty { "none found" }
         } catch (error: Exception) {
             dexName + " class scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
         }
