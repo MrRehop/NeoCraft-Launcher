@@ -85,6 +85,8 @@ class MainActivity : Activity() {
                     if (game.artifactDigests.isEmpty()) appendLine("unavailable (Android did not expose readable APK paths)")
                     else game.artifactDigests.toSortedMap().forEach { (name, digest) -> appendLine("$name SHA-256: $digest") }
                     appendLine("NeoMod compatibility: $compatibility")
+                    appendLine("APK structure:")
+                    inspectApkStructure(game.packageName).forEach(::appendLine)
                 }
                 status.text = "Minecraft найдена\nВерсия: ${game.versionName ?: "неизвестна"}" +
                     "\nversionCode: ${game.versionCode}" +
@@ -108,6 +110,51 @@ class MainActivity : Activity() {
                 findCopyButton()?.isEnabled = true
             }
         }
+    }
+
+    private fun inspectApkStructure(packageName: String): List<String> {
+        val appInfo = try {
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                packageManager.getApplicationInfo(packageName, android.content.pm.PackageManager.ApplicationInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getApplicationInfo(packageName, 0)
+            }
+        } catch (error: Exception) {
+            return listOf("APK structure: unavailable (${error.javaClass.simpleName})")
+        }
+
+        val apkPaths = buildList {
+            appInfo.sourceDir?.let(::add)
+            appInfo.splitSourceDirs?.forEach(::add)
+        }.distinct()
+        val output = mutableListOf<String>()
+        for (path in apkPaths) {
+            output += "APK: ${java.io.File(path).name}"
+            try {
+                java.util.zip.ZipFile(path).use { zip ->
+                    val dex = mutableListOf<String>()
+                    val native = mutableListOf<String>()
+                    val assetRoots = sortedSetOf<String>()
+                    val entries = zip.entries()
+                    while (entries.hasMoreElements()) {
+                        val name = entries.nextElement().name
+                        if (name.matches(Regex("classes(\\d*)\\.dex"))) dex += name
+                        if (name.startsWith("lib/") && name.endsWith(".so")) native += name
+                        if (name.startsWith("assets/")) {
+                            val root = name.removePrefix("assets/").substringBefore("/")
+                            if (root.isNotBlank()) assetRoots += root
+                        }
+                    }
+                    output += "DEX entries: ${dex.sorted().joinToString().ifEmpty { "none listed" }}"
+                    output += "Native libraries: ${native.sorted().joinToString().ifEmpty { "none listed" }}"
+                    output += "Asset top-level entries: ${assetRoots.joinToString().ifEmpty { "none listed" }}"
+                }
+            } catch (error: Exception) {
+                output += "ZIP inspection failed: ${error.javaClass.simpleName}: ${error.message ?: "no details"}"
+            }
+        }
+        return output
     }
 
     private fun findCopyButton(): Button? {
