@@ -85,7 +85,7 @@ class MainActivity : Activity() {
                 AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")
             } catch (error: Exception) {
                 GameDiscoveryResult.Unknown(
-                    "Unexpected diagnostic error: \${error.message ?: error.javaClass.simpleName}"
+                    "Unexpected diagnostic error: ${error.message ?: error.javaClass.simpleName}"
                 )
             }
 
@@ -95,14 +95,14 @@ class MainActivity : Activity() {
                     val signers = game.signingCertificateSha256.orEmpty().sorted()
                     val match = ReviewedGameBuilds.registry.match(game)
                     val compatibility = when (match) {
-                        is GameBuildMatch.Supported -> "ПОДТВЕРЖДЕНА: \${match.build.buildId}"
-                        is GameBuildMatch.Unknown -> "НЕ ПОДТВЕРЖДЕНА: \${match.reason}"
+                        is GameBuildMatch.Supported -> "ПОДТВЕРЖДЕНА: ${match.build.buildId}"
+                        is GameBuildMatch.Unknown -> "НЕ ПОДТВЕРЖДЕНА: ${match.reason}"
                     }
                     val reportText = buildString {
                         appendLine("NeoCraft diagnostic report")
-                        appendLine("Package: \${game.packageName}")
-                        appendLine("Version name: \${game.versionName ?: "unknown"}")
-                        appendLine("Version code: \${game.versionCode}")
+                        appendLine("Package: ${game.packageName}")
+                        appendLine("Version name: ${game.versionName ?: "unknown"}")
+                        appendLine("Version code: ${game.versionCode}")
                         appendLine("Current signer SHA-256:")
                         if (signers.isEmpty()) appendLine("unavailable")
                         else signers.forEach(::appendLine)
@@ -113,24 +113,24 @@ class MainActivity : Activity() {
                         appendLine("APK structure:")
                         inspectApkStructure(game.packageName).forEach(::appendLine)
                     }
-                    val displayText = "Minecraft найдена\nВерсия: \${game.versionName ?: "неизвестна"}" +
-                        "\nversionCode: \${game.versionCode}" +
-                        "\nSHA-256 сертификата: \${signers.joinToString().ifEmpty { "нет данных" }}" +
+                    val displayText = "Minecraft найдена\nВерсия: ${game.versionName ?: "неизвестна"}" +
+                        "\nversionCode: ${game.versionCode}" +
+                        "\nSHA-256 сертификата: ${signers.joinToString().ifEmpty { "нет данных" }}" +
                         "\n\nСовместимость NeoCraft: " +
                         when (match) {
-                            is GameBuildMatch.Supported -> "подтверждена (\${match.build.buildId})"
-                            is GameBuildMatch.Unknown -> "не подтверждена\nПричина: \${match.reason}"
+                            is GameBuildMatch.Supported -> "подтверждена (${match.build.buildId})"
+                            is GameBuildMatch.Unknown -> "не подтверждена\nПричина: ${match.reason}"
                         } +
                         "\n\nSHA-256 APK и структура архива доступны в скопированном отчёте."
                     reportText to displayText
                 }
                 is GameDiscoveryResult.NotInstalled -> {
-                    "NeoCraft diagnostic report\nPackage: \${result.packageName}\nStatus: not installed" to
-                        "Minecraft не найдена: \${result.packageName}"
+                    "NeoCraft diagnostic report\nPackage: ${result.packageName}\nStatus: not installed" to
+                        "Minecraft не найдена: ${result.packageName}"
                 }
                 is GameDiscoveryResult.Unknown -> {
-                    "NeoCraft diagnostic report\nStatus: unknown\nReason: \${result.reason}" to
-                        "Не удалось проверить Minecraft:\n\${result.reason}"
+                    "NeoCraft diagnostic report\nStatus: unknown\nReason: ${result.reason}" to
+                        "Не удалось проверить Minecraft:\n${result.reason}"
                 }
             }
 
