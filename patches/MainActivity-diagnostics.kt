@@ -182,7 +182,7 @@ class MainActivity : Activity() {
                 }
                 error("Invalid ULEB128")
             }
-            require(bytes.size >= 112 && String(bytes, 0, 4, Charsets.US_ASCII) == "dex\\n") { "Invalid DEX header" }
+            require(bytes.size >= 112 && String(bytes, 0, 4, Charsets.US_ASCII) == "dex\n") { "Invalid DEX header" }
             val stringCount = readInt(56)
             val stringOffset = readInt(60)
             val typeCount = readInt(64)
@@ -214,7 +214,7 @@ class MainActivity : Activity() {
                 .groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(15)
             val mojangSample = classNames.filter { it.startsWith("com.mojang.") || it.startsWith("net.minecraft.") }.take(40)
             dexName + " defined classes: " + classNames.size +
-                "\\n" + dexName + " package prefixes: " + packageCounts.joinToString { it.key + " (" + it.value + ")" }.ifEmpty { "none" } +
+                "\n" + dexName + " package prefixes: " + packageCounts.joinToString { it.key + " (" + it.value + ")" }.ifEmpty { "none" } +
                 "\\n" + dexName + " Mojang/Minecraft sample: " + mojangSample.joinToString().ifEmpty { "none in selected namespaces" }
         } catch (error: Exception) {
             dexName + " class scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
@@ -231,13 +231,13 @@ class MainActivity : Activity() {
             lines += "Android receivers: " + (info.receivers?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
             lines += "Android providers: " + (info.providers?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
             lines += "Requested permissions: " + (info.requestedPermissions?.sorted()?.joinToString()?.ifEmpty { "none listed" } ?: "none listed")
-            lines.joinToString("\\n")
+            lines.joinToString("\n")
         } catch (error: Exception) {
             "Android component scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
         }
     }
 
-    private fun findCopyButton(): Button? {    private fun findCopyButton(): Button? {
+    private fun findCopyButton(): Button? {
         val root = (findViewById<android.view.View>(android.R.id.content) as? android.view.ViewGroup)
         return findButtonByTag(root)
     }
