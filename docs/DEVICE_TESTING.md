@@ -16,6 +16,15 @@ The artifact is temporary and is scheduled to expire on 2027-02-12. A later succ
 
 Do not uninstall, replace, or modify Minecraft PE Patched for this test.
 
+## Test launching the installed game
+
+1. Tap **Проверить Minecraft** and wait until the inspection finishes.
+2. If the game is found, the **Запустить Minecraft** button becomes available.
+3. Tap **Запустить Minecraft**. NeoCraft should open the installed `com.mojang.minecraftpe` package using Android's launch intent.
+4. Confirm that Minecraft opens normally. This test does not install, patch, or modify Minecraft.
+
+If Android reports that the launch activity is unavailable, record the exact message. Do not uninstall or replace the game.
+
 ## Collect the game identity report
 
 1. In NeoCraft, tap **Проверить Minecraft**.
@@ -23,7 +32,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched for this test.
 3. Tap **Скопировать диагностику**.
 4. Paste the complete copied report into the NeoCraft development conversation.
 
-The report is expected to include the installed package name, Android version code, version name, current signer SHA-256, readable installed APK/split SHA-256 digests, and a bounded structural inventory of the APK/DEX files.
+The report is expected to include the installed package name, Android version code, version name, current signer SHA-256, readable installed APK/split SHA-256 digests, the declared Application class and app component factory, and a bounded structural inventory of the APK/DEX files.
 
 ## How to interpret the result
 
