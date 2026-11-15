@@ -16,6 +16,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Extract Stage 9 source archive
         run: unzip -q NeoCraft-NeoMod-Stage9-clean.zip -d .
+      - name: Apply shared JSON parser resource limits
+        run: |
+          git apply --check patches/NeoModJson-resource-limits.patch
+          git apply patches/NeoModJson-resource-limits.patch
       - name: Inspect extracted NeoMod source layout
         run: |
           echo "=== Kotlin source files ==="

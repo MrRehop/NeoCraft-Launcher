@@ -1,0 +1,51 @@
+--- a/NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModJson.kt
++++ b/NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModJson.kt
+@@ -12,10 +12,17 @@
+     data object NullValue : NeoJsonValue
+ }
+ 
++private const val MAX_JSON_SOURCE_CHARS = 256 * 1024
++private const val MAX_JSON_NESTING_DEPTH = 64
++
+ internal class NeoJsonParser(private val source: String) {
+     private var index = 0
++    private var nestingDepth = 0
+ 
+     fun parse(): NeoJsonValue {
++        if (source.length > MAX_JSON_SOURCE_CHARS) {
++            error("JSON source exceeds \${MAX_JSON_SOURCE_CHARS} character limit")
++        }
+         skipWhitespace()
+         val value = parseValue()
+         skipWhitespace()
+@@ -26,8 +33,8 @@
+     private fun parseValue(): NeoJsonValue {
+         if (index >= source.length) error("unexpected end of JSON")
+         return when (source[index]) {
+-            '{' -> parseObject()
+-            '[' -> parseArray()
++            '{' -> withNesting { parseObject() }
++            '[' -> withNesting { parseArray() }
+             '"' -> NeoJsonValue.StringValue(parseString())
+             't' -> { consumeLiteral("true"); NeoJsonValue.BooleanValue(true) }
+             'f' -> { consumeLiteral("false"); NeoJsonValue.BooleanValue(false) }
+@@ -37,6 +44,19 @@
+         }
+     }
+ 
++    private fun withNesting(block: () -> NeoJsonValue): NeoJsonValue {
++        nestingDepth++
++        if (nestingDepth > MAX_JSON_NESTING_DEPTH) {
++            nestingDepth--
++            error("JSON nesting exceeds maximum depth of \${MAX_JSON_NESTING_DEPTH}")
++        }
++        return try {
++            block()
++        } finally {
++            nestingDepth--
++        }
++    }
++
+     private fun parseObject(): NeoJsonValue.ObjectValue {
+         expect('{')
+         skipWhitespace()

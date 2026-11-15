@@ -43,6 +43,18 @@ fun main() {
             )
             check(runCatching { NcpManifestDecoder.decode(invalid) }.exceptionOrNull() is NcpValidationException)
         },
+        "JSON nesting depth capped" to {
+            val atLimit = "[".repeat(64) + "0" + "]".repeat(64)
+            check(NeoJsonParser(atLimit).parse() is NeoJsonValue.ArrayValue)
+            val tooDeep = "[".repeat(65) + "0" + "]".repeat(65)
+            val error = runCatching { NeoJsonParser(tooDeep).parse() }.exceptionOrNull()
+            check(error is NeoModValidationException && error.message!!.contains("nesting"))
+        },
+        "JSON source length capped" to {
+            val tooLarge = "\"" + "x".repeat(256 * 1024) + "\""
+            val error = runCatching { NeoJsonParser(tooLarge).parse() }.exceptionOrNull()
+            check(error is NeoModValidationException && error.message!!.contains("character limit"))
+        },
         "UTF-8 BOM rejected" to {
             val bytes = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()) +
                 VALID_NCP_MANIFEST.toByteArray(Charsets.UTF_8)
