@@ -1,6 +1,6 @@
 # NeoCraft Package (NCP) format — version 1
 
-Status: IMPLEMENTATION CONTRACT DRAFT — parser not yet implemented.
+Status: IMPLEMENTATION CONTRACT DRAFT — NCP v1 manifest decoder is implemented and self-tested; ZIP package inspection and payload inventory/hash verification remain pending.
 
 ## 1. Container
 

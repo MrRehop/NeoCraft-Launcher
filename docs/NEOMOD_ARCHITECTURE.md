@@ -18,7 +18,7 @@ The native package extension is `.ncp` (NeoCraft Package).
 
 An NCP package describes content and its requirements. The package format must be independent of any particular Minecraft build and independent of the implementation language used by a mod.
 
-**NCP v1 container decision:** ZIP with the `.ncp` extension, root `manifest.json`, and payload under `content/`. The initial contract is documented in [NCP_FORMAT_V1.md](NCP_FORMAT_V1.md), with a JSON Schema and example manifest. The parser, streaming checks, and package tests are not implemented yet. Publisher signing remains outside v1.
+**NCP v1 container decision:** ZIP with the `.ncp` extension, root `manifest.json`, and payload under `content/`. The initial contract is documented in [NCP_FORMAT_V1.md](NCP_FORMAT_V1.md), with a JSON Schema and example manifest. A strict NCP v1 manifest decoder is now supplied through the CI source overlay and has dedicated JVM self-tests. The ZIP package reader, exact archive/file-inventory comparison, streaming SHA-256 verification, and NCP installation path remain unimplemented. Publisher signing remains outside v1.
 
 Every package must contain a manifest with at least:
 
@@ -112,11 +112,11 @@ Breaking changes require a new major API version and an explicit migration path.
 
 ## 10. Current implementation status
 
-The repository currently contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, and a CI debug-APK build.
+The repository currently contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, a legacy `.nmod` package reader/manager from the Stage 9 source archive, a separate NCP v1 manifest decoder supplied by the CI overlay, and a CI debug-APK build. The legacy `.nmod` reader is not an NCP reader and must not be treated as accepting `.ncp` files.
 
 The following are not yet implemented or verified:
 
-- NCP parser and validator (format contract and JSON Schema documented; implementation not started);
+- NCP v1 manifest decoder (implemented and self-tested); ZIP archive inspection, exact file-inventory checks, streaming size/SHA-256 verification, and NCP installation path not yet implemented;
 - package signature/trust model;
 - dependency resolver;
 - namespaced content registry;
