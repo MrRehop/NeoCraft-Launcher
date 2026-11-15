@@ -26,6 +26,17 @@ jobs:
           sed -n '1,240p' NeoCraft/neomod-core/build.gradle.kts
           echo "=== NeoMod core Kotlin declarations ==="
           grep -R -nE '^(package |(data )?class |(sealed )?(interface|class|object|enum class) )' NeoCraft/neomod-core/src 2>/dev/null || true
+          for source in \
+            NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModModels.kt \
+            NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModJson.kt \
+            NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModValidator.kt \
+            NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModPackageReader.kt \
+            NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NeoModPackageManager.kt \
+            NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NeoModCoreSelfTest.kt \
+            NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NeoModPackageReaderSelfTest.kt; do
+            echo "=== SOURCE: $source ==="
+            sed -n '1,320p' "$source"
+          done
       - name: Apply Android module dependency fix
         run: cp patches/android-integration-build.gradle.kts NeoCraft/android-integration/build.gradle.kts
       - name: Apply reviewed build registry and launcher UI
