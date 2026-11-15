@@ -41,10 +41,10 @@ object NcpManifestDecoder {
     private val packageIdRegex = Regex("^[a-z][a-z0-9_]{1,47}$")
     private val localIdRegex = Regex("^[a-z][a-z0-9_]{0,63}$")
     private val versionPart = "(?:0|[1-9][0-9]*)"
-    private val versionRegex = Regex("^" + versionPart + "\\\\." + versionPart + "\\\\." + versionPart + "$")
-    private val rangeRegex = Regex("^(?:" + versionPart + "\\\\." + versionPart + "\\\\." + versionPart +
-        "|>=" + versionPart + "\\\\." + versionPart + "\\\\." + versionPart +
-        "(?: <" + versionPart + "\\\\." + versionPart + "\\\\." + versionPart + ")?)$")
+    private val versionRegex = Regex("^" + versionPart + "\\." + versionPart + "\\." + versionPart + "$")
+    private val rangeRegex = Regex("^(?:" + versionPart + "\\." + versionPart + "\\." + versionPart +
+        "|>=" + versionPart + "\\." + versionPart + "\\." + versionPart +
+        "(?: <" + versionPart + "\\." + versionPart + "\\." + versionPart + ")?)$")
     private val boundedRangeRegex = Regex("^>=(.+) <(.+)$")
     private val sha256Regex = Regex("^[a-f0-9]{64}$")
     private val archivePathRegex = Regex("^content/[A-Za-z0-9._/-]+$")
@@ -277,15 +277,6 @@ object NcpManifestDecoder {
         if (unknown.isNotEmpty()) {
             fail("NCP_MANIFEST_INVALID", "unknown " + field + " field(s): " + unknown.sorted().joinToString())
         }
-    }
-
-    private fun toPlainValue(value: NeoJsonValue): Any? = when (value) {
-        is NeoJsonValue.ObjectValue -> value.values.mapValues { (_, child) -> toPlainValue(child) }
-        is NeoJsonValue.ArrayValue -> value.values.map(::toPlainValue)
-        is NeoJsonValue.StringValue -> value.value
-        is NeoJsonValue.NumberValue -> value.value.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        is NeoJsonValue.BooleanValue -> value.value
-        NeoJsonValue.NullValue -> null
     }
 
     private fun NeoJsonValue.asObject(field: String): NeoJsonValue.ObjectValue =
