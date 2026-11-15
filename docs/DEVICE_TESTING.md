@@ -6,11 +6,11 @@ The latest successful Android debug build is GitHub Actions [run #55](https://gi
 
 Artifact: `neocraft-debug-apk` (886,438-byte ZIP containing `app-debug.apk`, 893,464 bytes). It expires on 2027-02-13 at 14:28 UTC. Verified artifact ZIP SHA-256: `2b789057ef41b15f4e51e803350c2d4545a3d41a00ee6d1e746e82488c7da838`. Extracted APK SHA-256: `28fc0987bca1e83306990f3bb4226ba9907e3aaeba50f18847db493ce21098b4`.
 
-The APK manifest reports launcher package `org.neocraft.launcher`, versionName `0.1.0`, versionCode `1`, minSdk `26`, and targetSdk `35`. This run passed the NCP/core self-tests and Android debug APK build. Run #53 has not yet been retested on the physical device.
+The APK manifest reports launcher package `org.neocraft.launcher`, versionName `0.1.0`, versionCode `1`, minSdk `26`, and targetSdk `35`. This run passed the NCP/core self-tests and Android debug APK build. Run #55 has not yet been retested on the physical device.
 
 ## Install on the Samsung Android device
 
-1. Open the [latest successful build run](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43678005228).
+1. Open the [latest successful build run](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43724522041).
 2. Scroll to **Artifacts** and download **neocraft-debug-apk**.
 3. Open the downloaded ZIP and extract `app-debug.apk`.
 4. Tap `app-debug.apk`. If Android asks, allow the file manager or browser to install this APK. Only grant this permission to the app you used to download the project artifact; you can revoke it afterward.
@@ -25,7 +25,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched for this test.
 3. Tap **Запустить Minecraft**. NeoCraft should open the installed `com.mojang.minecraftpe` package using Android's launch intent.
 4. Confirm that Minecraft opens normally. This test does not install, patch, or modify Minecraft.
 
-**Earlier device test result (2026-11-15): PASS.** The user confirmed that Minecraft opened successfully from NeoCraft on an earlier debug build (run [43669593047](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43669593047)). This verifies package discovery and launch-intent handoff on the tested device/build; it does not verify NeoMod runtime integration. The newer run #53 still needs a separate on-device check.
+**Earlier device test result (2026-11-15): PASS.** The user confirmed that Minecraft opened successfully from NeoCraft on an earlier debug build (run [43669593047](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43669593047)). This verifies package discovery and launch-intent handoff on the tested device/build; it does not verify NeoMod runtime integration. The newer run #55 still needs a separate on-device check.
 
 If Android reports that the launch activity is unavailable, record the exact message. Do not uninstall or replace the game.
 
