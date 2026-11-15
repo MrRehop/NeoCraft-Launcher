@@ -18,7 +18,7 @@ The native package extension is `.ncp` (NeoCraft Package).
 
 An NCP package describes content and its requirements. The package format must be independent of any particular Minecraft build and independent of the implementation language used by a mod.
 
-The exact on-disk container encoding is intentionally not frozen in this draft. A ZIP container with an `.ncp` extension is one possible implementation, but must not be treated as an accepted decision until package integrity, streaming, signing, and update requirements are evaluated.
+**NCP v1 container decision:** ZIP with the `.ncp` extension, root `manifest.json`, and payload under `content/`. The initial contract is documented in [NCP_FORMAT_V1.md](NCP_FORMAT_V1.md), with a JSON Schema and example manifest. The parser, streaming checks, and package tests are not implemented yet. Publisher signing remains outside v1.
 
 Every package must contain a manifest with at least:
 
@@ -116,7 +116,7 @@ The repository currently contains launcher-side Minecraft discovery and diagnost
 
 The following are not yet implemented or verified:
 
-- NCP parser and validator;
+- NCP parser and validator (format contract and JSON Schema documented; implementation not started);
 - package signature/trust model;
 - dependency resolver;
 - namespaced content registry;
