@@ -2,9 +2,9 @@
 
 ## Current build
 
-The latest successful Android debug build is GitHub Actions [run #54](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43724339536), completed on 2026-11-15 at 14:27 UTC from commit `5c9a4a4b0afae49c210ea31ab1fafd1be55f449c`.
+The latest successful Android debug build is GitHub Actions [run #55](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43724522041), completed on 2026-11-15 at 14:29 UTC from commit `dc5ff88e4f1b09335e530793de7c67e3bc510817`.
 
-Artifact: `neocraft-debug-apk` (886,438-byte ZIP containing `app-debug.apk`, 893,460 bytes). It expires on 2027-02-13 at 14:26 UTC. Verified artifact ZIP SHA-256: `c90a8580b72d1ef23c6ad4bb7b2cd9507cce2c09fd86c3860964fea74862365c`. Extracted APK SHA-256: `31d5c996cf4da5664f34a60221d30f9a1d35338e45e094aa77f216c78c023a1c`.
+Artifact: `neocraft-debug-apk` (886,438-byte ZIP containing `app-debug.apk`, 893,464 bytes). It expires on 2027-02-13 at 14:28 UTC. Verified artifact ZIP SHA-256: `2b789057ef41b15f4e51e803350c2d4545a3d41a00ee6d1e746e82488c7da838`. Extracted APK SHA-256: `28fc0987bca1e83306990f3bb4226ba9907e3aaeba50f18847db493ce21098b4`.
 
 The APK manifest reports launcher package `org.neocraft.launcher`, versionName `0.1.0`, versionCode `1`, minSdk `26`, and targetSdk `35`. This run passed the NCP/core self-tests and Android debug APK build. Run #53 has not yet been retested on the physical device.
 
