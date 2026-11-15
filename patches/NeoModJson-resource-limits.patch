@@ -13,7 +13,7 @@
  
      fun parse(): NeoJsonValue {
 +        if (source.length > MAX_JSON_SOURCE_CHARS) {
-+            error("JSON source exceeds \${MAX_JSON_SOURCE_CHARS} character limit")
++            error("JSON source exceeds 262144 character limit")
 +        }
          skipWhitespace()
          val value = parseValue()
@@ -37,7 +37,7 @@
 +        nestingDepth++
 +        if (nestingDepth > MAX_JSON_NESTING_DEPTH) {
 +            nestingDepth--
-+            error("JSON nesting exceeds maximum depth of \${MAX_JSON_NESTING_DEPTH}")
++            error("JSON nesting exceeds maximum depth of 64")
 +        }
 +        return try {
 +            block()
