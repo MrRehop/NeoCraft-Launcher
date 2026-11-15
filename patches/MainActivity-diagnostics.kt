@@ -19,6 +19,7 @@ import java.util.concurrent.Executors
 class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var checkButton: Button
+    private lateinit var launchButton: Button
     private lateinit var copyButton: Button
     private var diagnosticReport: String? = null
     private val inspectionExecutor = Executors.newSingleThreadExecutor()
@@ -56,6 +57,11 @@ class MainActivity : Activity() {
             text = "Проверить Minecraft"
             setOnClickListener { inspectGame() }
         }
+        launchButton = Button(this).apply {
+            text = "Запустить Minecraft"
+            isEnabled = false
+            setOnClickListener { launchMinecraft() }
+        }
         copyButton = Button(this).apply {
             text = "Скопировать диагностику"
             isEnabled = false
@@ -68,6 +74,7 @@ class MainActivity : Activity() {
         layout.addView(title)
         layout.addView(status)
         layout.addView(checkButton)
+        layout.addView(launchButton)
         layout.addView(copyButton)
         layout.addView(mods)
         setContentView(layout)
@@ -76,6 +83,7 @@ class MainActivity : Activity() {
     private fun inspectGame() {
         diagnosticReport = null
         copyButton.isEnabled = false
+        launchButton.isEnabled = false
         checkButton.isEnabled = false
         status.text = "Проверка Minecraft и анализ APK…"
         val request = ++inspectionToken
@@ -139,6 +147,7 @@ class MainActivity : Activity() {
                 diagnosticReport = report
                 status.text = display
                 copyButton.isEnabled = true
+                launchButton.isEnabled = result is GameDiscoveryResult.Found
                 checkButton.isEnabled = true
             }
         }
@@ -387,6 +396,13 @@ class MainActivity : Activity() {
             @Suppress("DEPRECATION")
             val info = packageManager.getPackageInfo(packageName, android.content.pm.PackageManager.GET_ACTIVITIES or android.content.pm.PackageManager.GET_SERVICES or android.content.pm.PackageManager.GET_RECEIVERS or android.content.pm.PackageManager.GET_PROVIDERS or android.content.pm.PackageManager.GET_PERMISSIONS)
             val lines = mutableListOf<String>()
+            val applicationClass = info.applicationInfo?.className?.takeIf { it.isNotBlank() }
+                ?: "(default android.app.Application)"
+            lines += "Application class: " + applicationClass
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                lines += "App component factory: " +
+                    (info.applicationInfo?.appComponentFactory?.takeIf { it.isNotBlank() } ?: "(default)")
+            }
             lines += "Android activities: " + (info.activities?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
             lines += "Android services: " + (info.services?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
             lines += "Android receivers: " + (info.receivers?.map { it.name }?.sorted()?.joinToString()?.ifEmpty { "none declared" } ?: "none declared")
@@ -395,6 +411,21 @@ class MainActivity : Activity() {
             lines.joinToString("\n")
         } catch (error: Exception) {
             "Android component scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
+        }
+    }
+
+    private fun launchMinecraft() {
+        val launchIntent = packageManager.getLaunchIntentForPackage("com.mojang.minecraftpe")
+        if (launchIntent == null) {
+            Toast.makeText(this, "Не удалось найти точку запуска Minecraft", Toast.LENGTH_LONG).show()
+            return
+        }
+        try {
+            startActivity(launchIntent)
+        } catch (error: android.content.ActivityNotFoundException) {
+            Toast.makeText(this, "Не удалось открыть Minecraft: " + (error.message ?: "Activity не найдена"), Toast.LENGTH_LONG).show()
+        } catch (error: SecurityException) {
+            Toast.makeText(this, "Android запретил запуск Minecraft: " + (error.message ?: "нет доступа"), Toast.LENGTH_LONG).show()
         }
     }
 

@@ -2,9 +2,9 @@
 
 ## Current build
 
-The latest debug APK was built by GitHub Actions workflow run [#32](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43607196864) on 2026-11-14. The uploaded artifact is named `neocraft-debug-apk`.
+The debug APK containing the launch button was built successfully by GitHub Actions run [43669593047](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43669593047) on 2026-11-15. Artifact: `neocraft-debug-apk`.
 
-The artifact is temporary and is scheduled to expire on 2027-02-12. A later successful workflow run will create a newer artifact.
+The subsequent documentation workflow [43669620029](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43669620029) also passed, but its source overlay accidentally reverted the launch-button patch. The launch-button patch is restored in the current branch; use a fresh successful build after this restoration for future testing. Artifacts expire; check the latest run before downloading.
 
 ## Install on the Samsung Android device
 
@@ -22,6 +22,8 @@ Do not uninstall, replace, or modify Minecraft PE Patched for this test.
 2. If the game is found, the **Запустить Minecraft** button becomes available.
 3. Tap **Запустить Minecraft**. NeoCraft should open the installed `com.mojang.minecraftpe` package using Android's launch intent.
 4. Confirm that Minecraft opens normally. This test does not install, patch, or modify Minecraft.
+
+**Device test result (2026-11-15): PASS.** The user confirmed that Minecraft opened successfully from NeoCraft. This verifies package discovery and launch-intent handoff on the tested device/build; it does not verify NeoMod runtime integration.
 
 If Android reports that the launch activity is unavailable, record the exact message. Do not uninstall or replace the game.
 
