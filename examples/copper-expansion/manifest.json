@@ -1,0 +1,32 @@
+{
+  "format": "org.neocraft.ncp",
+  "formatVersion": 1,
+  "id": "copper_expansion",
+  "name": "Copper Expansion",
+  "publisher": "NeoCraft Example Publisher",
+  "version": "1.0.0",
+  "api": {
+    "versionRange": ">=1.0.0 <2.0.0"
+  },
+  "capabilities": [
+    "content.read",
+    "content.register"
+  ],
+  "dependencies": [],
+  "optionalDependencies": [],
+  "conflicts": [],
+  "content": [
+    {
+      "type": "item",
+      "localId": "copper_ingot",
+      "path": "content/items/copper_ingot.json"
+    }
+  ],
+  "files": [
+    {
+      "path": "content/items/copper_ingot.json",
+      "size": 56,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

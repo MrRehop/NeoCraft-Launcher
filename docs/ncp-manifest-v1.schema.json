@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neocraft.example/schemas/ncp-manifest-v1.schema.json",
+  "title": "NeoCraft Package manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "formatVersion",
+    "id",
+    "name",
+    "publisher",
+    "version",
+    "api",
+    "capabilities",
+    "dependencies",
+    "optionalDependencies",
+    "conflicts",
+    "content",
+    "files"
+  ],
+  "properties": {
+    "format": {
+      "const": "org.neocraft.ncp"
+    },
+    "formatVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,47}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "version": {
+      "$ref": "#/$defs/semver"
+    },
+    "api": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versionRange"
+      ],
+      "properties": {
+        "versionRange": {
+          "$ref": "#/$defs/range"
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "content.read",
+          "content.register",
+          "storage.profile",
+          "network.client"
+        ]
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency"
+      }
+    },
+    "optionalDependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{1,47}$"
+      }
+    },
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "localId",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "resource",
+              "block",
+              "item",
+              "entity",
+              "recipe",
+              "behavior"
+            ]
+          },
+          "localId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^content/[A-Za-z0-9._/-]+$"
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "size",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^content/[A-Za-z0-9._/-]+$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 33554432
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "range": {
+      "type": "string",
+      "pattern": "^(\\d+\\.\\d+\\.\\d+|>=\\d+\\.\\d+\\.\\d+( <\\d+\\.\\d+\\.\\d+)?)$"
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "versionRange"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{1,47}$"
+        },
+        "versionRange": {
+          "$ref": "#/$defs/range"
+        }
+      }
+    }
+  }
+}
