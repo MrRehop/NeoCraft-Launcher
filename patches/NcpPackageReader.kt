@@ -39,6 +39,7 @@ object NcpPackageReader {
             ZipFile(file).use { zip ->
                 val entries = Collections.list(zip.entries())
                 if (entries.size > MAX_ENTRIES) fail("NCP_LIMIT_EXCEEDED", "archive contains more than $MAX_ENTRIES entries")
+                NcpZipMetadataGuard.validate(file, entries.map { it.name })
 
                 val seen = HashSet<String>()
                 val files = LinkedHashMap<String, java.util.zip.ZipEntry>()
