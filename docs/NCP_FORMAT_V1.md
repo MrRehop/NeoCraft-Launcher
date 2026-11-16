@@ -1,6 +1,6 @@
 # NeoCraft Package (NCP) format — version 1
 
-Status: IMPLEMENTATION CONTRACT DRAFT — NCP v1 manifest decoder is implemented and self-tested; ZIP package inspection and payload inventory/hash verification remain pending.
+Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder is implemented and self-tested. A read-only ZIP package reader and central-directory metadata guard are now on PR #1; the latest CI run for these additions is pending. Package installation and activation remain unimplemented.
 
 ## 1. Container
 
@@ -12,6 +12,7 @@ The archive must not contain:
 - absolute paths, drive-letter paths, backslashes, or path traversal segments;
 - duplicate paths (including duplicates after slash normalization);
 - symbolic links or encrypted ZIP entries;
+- ZIP64 and multi-disk containers (not supported by the current NCP v1 reader);
 - nested archives intended for automatic execution;
 - executable code that the importer attempts to run.
 
