@@ -50,6 +50,8 @@ jobs:
           cp patches/NcpManifest.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpManifest.kt
           mkdir -p NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core
           cp patches/NcpManifestSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpManifestSelfTest.kt
+          cp patches/NcpPackageReader.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpPackageReader.kt
+          cp patches/NcpPackageReaderSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpPackageReaderSelfTest.kt
           cp patches/AndroidGameDiscovery-artifact-digests.kt NeoCraft/android-integration/src/main/kotlin/org/neocraft/neomod/android/AndroidGameDiscovery.kt
           cp patches/MainActivity-diagnostics.kt NeoCraft/app/src/main/java/org/neocraft/launcher/MainActivity.kt
       - name: Set up JDK 17
@@ -70,10 +72,15 @@ jobs:
               classpath = sourceSets["test"].runtimeClasspath
               mainClass.set("org.neocraft.neomod.core.NcpManifestSelfTestKt")
           }
+          tasks.register<JavaExec>("ncpPackageReaderSelfTest") {
+              dependsOn(tasks.testClasses)
+              classpath = sourceSets["test"].runtimeClasspath
+              mainClass.set("org.neocraft.neomod.core.NcpPackageReaderSelfTestKt")
+          }
           EOF
       - name: Run NeoMod core self-tests
         working-directory: NeoCraft
-        run: gradle --no-daemon :neomod-core:selfTest :neomod-core:ncpManifestSelfTest
+        run: gradle --no-daemon :neomod-core:selfTest :neomod-core:ncpManifestSelfTest :neomod-core:ncpPackageReaderSelfTest
       - name: Build debug APK
         working-directory: NeoCraft
         run: gradle --no-daemon :app:assembleDebug
