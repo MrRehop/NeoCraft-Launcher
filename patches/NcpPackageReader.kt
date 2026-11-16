@@ -125,7 +125,7 @@ object NcpPackageReader {
     }
 
     private fun validateEntryName(raw: String, directory: Boolean): String {
-        if (raw.isEmpty() || '\u0000' in raw || '\\\\' in raw || raw.startsWith("/") ||
+        if (raw.isEmpty() || '\u0000' in raw || '\\' in raw || raw.startsWith("/") ||
             Regex("^[A-Za-z]:").containsMatchIn(raw)) {
             fail("NCP_PATH_UNSAFE", "unsafe ZIP entry path")
         }
