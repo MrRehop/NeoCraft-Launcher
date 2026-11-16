@@ -66,7 +66,7 @@ internal object NcpZipMetadataGuard {
                 val madeBy = readU16(raf, cursor + 4)
                 val platform = madeBy ushr 8
                 val flags = readU16(raf, cursor + 8)
-                if (flags and ENCRYPTION_FLAGS != 0) {
+                if ((flags and ENCRYPTION_FLAGS) != 0) {
                     fail("NCP_ARCHIVE_INVALID", "encrypted ZIP entries are not allowed")
                 }
                 val method = readU16(raf, cursor + 10)
