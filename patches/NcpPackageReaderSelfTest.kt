@@ -1,6 +1,7 @@
 package org.neocraft.neomod.core
 
 import java.io.File
+import java.io.RandomAccessFile
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -18,6 +19,54 @@ private fun makeNcpTestArchive(entries: List<Pair<String, ByteArray>>): File {
         }
     }
     return file
+}
+
+
+private fun readNcpTestU16(raf: RandomAccessFile, offset: Long): Int {
+    raf.seek(offset)
+    val a = raf.read()
+    val b = raf.read()
+    check(a >= 0 && b >= 0)
+    return a or (b shl 8)
+}
+
+private fun readNcpTestU32(raf: RandomAccessFile, offset: Long): Long {
+    raf.seek(offset)
+    val a = raf.read()
+    val b = raf.read()
+    val c = raf.read()
+    val d = raf.read()
+    check(a >= 0 && b >= 0 && c >= 0 && d >= 0)
+    return (a.toLong() and 0xff) or ((b.toLong() and 0xff) shl 8) or
+        ((c.toLong() and 0xff) shl 16) or ((d.toLong() and 0xff) shl 24)
+}
+
+private fun markFirstNcpCentralEntryAsUnixSymlink(file: File) {
+    RandomAccessFile(file, "rw").use { raf ->
+        val length = raf.length()
+        val searchStart = (length - 22 - 65_535).coerceAtLeast(0)
+        var eocd = -1L
+        var position = length - 22
+        while (position >= searchStart) {
+            if (readNcpTestU32(raf, position) == 0x06054B50L &&
+                position + 22L + readNcpTestU16(raf, position + 20) == length) {
+                eocd = position
+                break
+            }
+            position--
+        }
+        check(eocd >= 0)
+        val centralOffset = readNcpTestU32(raf, eocd + 16)
+        check(readNcpTestU32(raf, centralOffset) == 0x02014B50L)
+        raf.seek(centralOffset + 4)
+        raf.write(0x14)
+        raf.write(0x03) // Unix host platform, ZIP version 2.0
+        raf.seek(centralOffset + 38)
+        raf.write(0x00)
+        raf.write(0x00)
+        raf.write(0xFF)
+        raf.write(0xA1) // Unix symlink mode in the upper 16 external-attribute bits
+    }
 }
 
 private fun ncpTestManifest(hash: String = ncpTestHash("hello".toByteArray()), size: Int = 5): ByteArray =
@@ -74,6 +123,28 @@ fun main() {
             try {
                 val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
                 check(error is NcpValidationException && error.code == "NCP_FILE_INVENTORY_MISMATCH")
+            } finally { file.delete() }
+        },
+
+        "declared uncompressed size mismatch rejected" to {
+            val file = makeNcpTestArchive(listOf(
+                "manifest.json" to ncpTestManifest(size = 99),
+                "content/data.txt" to payload,
+            ))
+            try {
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_FILE_INVENTORY_MISMATCH")
+            } finally { file.delete() }
+        },
+        "Unix symbolic link metadata rejected" to {
+            val file = makeNcpTestArchive(listOf(
+                "manifest.json" to ncpTestManifest(),
+                "content/data.txt" to payload,
+            ))
+            try {
+                markFirstNcpCentralEntryAsUnixSymlink(file)
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_PATH_UNSAFE")
             } finally { file.delete() }
         },
         "path traversal rejected" to {
