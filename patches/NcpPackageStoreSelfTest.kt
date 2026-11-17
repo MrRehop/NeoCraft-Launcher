@@ -18,17 +18,21 @@ private fun ncpStoreArchive(version: String = "1.0.0", payload: ByteArray = "hel
           "id":"sample_pack",
           "name":"Sample Pack",
           "publisher":"NeoCraft Tests",
-          "version":"$version",
+          "version":"__VERSION__",
           "api":{"versionRange":">=1.0.0 <2.0.0"},
           "capabilities":[],
           "dependencies":[],
           "optionalDependencies":[],
           "conflicts":[],
           "content":[],
-          "files":[{"path":"content/data.txt","size":\${payload.size},"sha256":"$hash"}],
+          "files":[{"path":"content/data.txt","size":__SIZE__,"sha256":"__HASH__"}],
           "extensions":{}
         }
-    """.trimIndent().toByteArray(Charsets.UTF_8)
+    """.trimIndent()
+        .replace("__VERSION__", version)
+        .replace("__SIZE__", payload.size.toString())
+        .replace("__HASH__", hash)
+        .toByteArray(Charsets.UTF_8)
     val file = File.createTempFile("neocraft-ncp-store-", ".ncp")
     ZipOutputStream(file.outputStream()).use { zip ->
         zip.putNextEntry(ZipEntry("manifest.json"))
@@ -44,7 +48,7 @@ private fun ncpStoreArchive(version: String = "1.0.0", payload: ByteArray = "hel
 fun main() {
     val tests = listOf(
         "valid package installs and is listed" to {
-            val root = Files.createTempDirectory("ncp-store-valid-").toFile()
+            val root = Files.Files.createTempDirectory("ncp-store-valid-").toFile()
             val archive = ncpStoreArchive()
             try {
                 val store = NcpPackageStore(root)
@@ -59,7 +63,7 @@ fun main() {
             }
         },
         "multiple versions coexist without overwriting" to {
-            val root = createTempDirectory("ncp-store-versions-").toFile()
+            val root = Files.createTempDirectory("ncp-store-versions-").toFile()
             val first = ncpStoreArchive("1.0.0")
             val second = ncpStoreArchive("1.1.0", "world".toByteArray())
             try {
@@ -76,7 +80,7 @@ fun main() {
             }
         },
         "duplicate version is rejected without damaging installed copy" to {
-            val root = createTempDirectory("ncp-store-duplicate-").toFile()
+            val root = Files.createTempDirectory("ncp-store-duplicate-").toFile()
             val first = ncpStoreArchive()
             val duplicate = ncpStoreArchive(payload = "other".toByteArray())
             try {
@@ -93,7 +97,7 @@ fun main() {
             }
         },
         "failed validation leaves no visible package" to {
-            val root = createTempDirectory("ncp-store-failure-").toFile()
+            val root = Files.createTempDirectory("ncp-store-failure-").toFile()
             val invalid = ncpStoreArchive(payload = "tampered".toByteArray(), declaredHashOverride = "0".repeat(64))
             try {
                 val store = NcpPackageStore(root)
@@ -108,7 +112,7 @@ fun main() {
             }
         },
         "modified installed payload is detected" to {
-            val root = createTempDirectory("ncp-store-tamper-").toFile()
+            val root = Files.createTempDirectory("ncp-store-tamper-").toFile()
             val archive = ncpStoreArchive()
             try {
                 val store = NcpPackageStore(root)
@@ -122,7 +126,7 @@ fun main() {
             }
         },
         "uninstall removes only requested version" to {
-            val root = createTempDirectory("ncp-store-uninstall-").toFile()
+            val root = Files.createTempDirectory("ncp-store-uninstall-").toFile()
             val first = ncpStoreArchive("1.0.0")
             val second = ncpStoreArchive("1.1.0", "world".toByteArray())
             try {
@@ -138,7 +142,7 @@ fun main() {
             }
         },
         "uninstall of absent package is rejected" to {
-            val root = createTempDirectory("ncp-store-absent-").toFile()
+            val root = Files.createTempDirectory("ncp-store-absent-").toFile()
             try {
                 val store = NcpPackageStore(root)
                 val error = runCatching { store.uninstall("sample_pack", "1.0.0") }.exceptionOrNull()
