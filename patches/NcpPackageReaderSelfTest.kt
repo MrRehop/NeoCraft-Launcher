@@ -161,6 +161,18 @@ fun main() {
                 check(error is NcpValidationException && error.code == "NCP_FILE_INVENTORY_MISMATCH")
             } finally { file.delete() }
         },
+        "entry count limit enforced during enumeration" to {
+            val entries = ArrayList<Pair<String, ByteArray>>()
+            entries += "manifest.json" to ncpTestManifest()
+            repeat(2048) { index ->
+                entries += "content/extra_$index.bin" to byteArrayOf(1)
+            }
+            val file = makeNcpTestArchive(entries)
+            try {
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_LIMIT_EXCEEDED")
+            } finally { file.delete() }
+        },
         "local and central compression methods must match" to {
             val file = makeNcpTestArchive(listOf(
                 "manifest.json" to ncpTestManifest(),
