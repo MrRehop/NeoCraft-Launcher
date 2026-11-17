@@ -1,6 +1,7 @@
 package org.neocraft.neomod.core
 
 import java.io.File
+import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -8,8 +9,8 @@ import java.util.zip.ZipOutputStream
 private fun ncpStoreHash(bytes: ByteArray): String =
     MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
-private fun ncpStoreArchive(version: String = "1.0.0", payload: ByteArray = "hello".toByteArray()): File {
-    val hash = ncpStoreHash(payload)
+private fun ncpStoreArchive(version: String = "1.0.0", payload: ByteArray = "hello".toByteArray(), declaredHashOverride: String? = null): File {
+    val hash = declaredHashOverride ?: ncpStoreHash(payload)
     val manifest = """
         {
           "format":"org.neocraft.ncp",
@@ -43,7 +44,7 @@ private fun ncpStoreArchive(version: String = "1.0.0", payload: ByteArray = "hel
 fun main() {
     val tests = listOf(
         "valid package installs and is listed" to {
-            val root = createTempDirectory("ncp-store-valid-").toFile()
+            val root = Files.createTempDirectory("ncp-store-valid-").toFile()
             val archive = ncpStoreArchive()
             try {
                 val store = NcpPackageStore(root)
@@ -93,7 +94,7 @@ fun main() {
         },
         "failed validation leaves no visible package" to {
             val root = createTempDirectory("ncp-store-failure-").toFile()
-            val invalid = ncpStoreArchive(payload = "tampered".toByteArray())
+            val invalid = ncpStoreArchive(payload = "tampered".toByteArray(), declaredHashOverride = "0".repeat(64))
             try {
                 val store = NcpPackageStore(root)
                 val error = runCatching { store.install(invalid) }.exceptionOrNull()
