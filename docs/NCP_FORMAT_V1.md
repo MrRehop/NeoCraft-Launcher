@@ -1,6 +1,6 @@
 # NeoCraft Package (NCP) format — version 1
 
-Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder is implemented and self-tested. A read-only ZIP package reader and central-directory metadata guard are now on PR #1; the latest CI run for these additions is pending. Package installation and activation remain unimplemented.
+Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, read-only ZIP validator, ZIP metadata guard, and transactional local package store are implemented on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. These operations store data only; runtime activation and Minecraft content loading remain unimplemented.
 
 ## 1. Container
 
@@ -137,13 +137,15 @@ Errors should have stable machine-readable codes and human-readable details. Ini
 
 ## 9. Explicit non-goals for v1
 
-NCP validation does not:
-- install or activate a mod;
+NCP validation alone does not:
+- activate a mod;
 - execute scripts or native libraries;
 - patch Minecraft APK/DEX/native libraries;
 - create in-game blocks, items, entities, recipes or behaviors;
 - establish publisher identity or package authenticity;
 - prove compatibility with Minecraft 1.26.13.1;
 - provide offline/LAN functionality.
+
+The package store is not a runtime loader: it does not merge content into Minecraft, resolve or activate dependency graphs, enforce runtime capabilities, execute code, or provide rollback of an already-running game. Those are separate future components.
 
 These require separate reviewed components and tests.
