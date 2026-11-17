@@ -41,6 +41,27 @@ private fun readNcpTestU32(raf: RandomAccessFile, offset: Long): Long {
         ((c.toLong() and 0xff) shl 16) or ((d.toLong() and 0xff) shl 24)
 }
 
+private fun patchNcpEocdU16(file: File, fieldOffset: Long, value: Int) {
+    RandomAccessFile(file, "rw").use { raf ->
+        val length = raf.length()
+        val searchStart = (length - 22 - 65_535).coerceAtLeast(0)
+        var eocd = -1L
+        var position = length - 22
+        while (position >= searchStart) {
+            if (readNcpTestU32(raf, position) == 0x06054B50L &&
+                position + 22L + readNcpTestU16(raf, position + 20) == length) {
+                eocd = position
+                break
+            }
+            position--
+        }
+        check(eocd >= 0)
+        raf.seek(eocd + fieldOffset)
+        raf.write(value and 0xff)
+        raf.write((value ushr 8) and 0xff)
+    }
+}
+
 private fun changeFirstNcpLocalCompressionMethod(file: File, method: Int) {
     RandomAccessFile(file, "rw").use { raf ->
         val length = raf.length()
@@ -203,6 +224,40 @@ fun main() {
             try {
                 val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
                 check(error is NcpValidationException && error.code == "NCP_PATH_UNSAFE")
+            } finally { file.delete() }
+        },
+        "compression ratio limit enforced" to {
+            val largePayload = ByteArray(100_000) { 'A'.code.toByte() }
+            val file = makeNcpTestArchive(listOf(
+                "manifest.json" to ncpTestManifest(ncpTestHash(largePayload), largePayload.size),
+                "content/data.txt" to largePayload,
+            ))
+            try {
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_LIMIT_EXCEEDED")
+            } finally { file.delete() }
+        },
+        "multi-disk ZIP metadata rejected" to {
+            val file = makeNcpTestArchive(listOf(
+                "manifest.json" to ncpTestManifest(),
+                "content/data.txt" to payload,
+            ))
+            try {
+                patchNcpEocdU16(file, 4, 1)
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_ARCHIVE_INVALID")
+            } finally { file.delete() }
+        },
+        "ZIP64 sentinel entry counts rejected" to {
+            val file = makeNcpTestArchive(listOf(
+                "manifest.json" to ncpTestManifest(),
+                "content/data.txt" to payload,
+            ))
+            try {
+                patchNcpEocdU16(file, 8, 0xFFFF)
+                patchNcpEocdU16(file, 10, 0xFFFF)
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_ARCHIVE_INVALID")
             } finally { file.delete() }
         },
     )
