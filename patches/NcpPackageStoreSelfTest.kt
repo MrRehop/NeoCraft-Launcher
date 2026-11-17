@@ -48,7 +48,7 @@ private fun ncpStoreArchive(version: String = "1.0.0", payload: ByteArray = "hel
 fun main() {
     val tests = listOf(
         "valid package installs and is listed" to {
-            val root = Files.Files.createTempDirectory("ncp-store-valid-").toFile()
+            val root = Files.createTempDirectory("ncp-store-valid-").toFile()
             val archive = ncpStoreArchive()
             try {
                 val store = NcpPackageStore(root)
