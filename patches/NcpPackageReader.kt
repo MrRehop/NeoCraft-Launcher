@@ -3,7 +3,6 @@ package org.neocraft.neomod.core
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
-import java.util.Collections
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
@@ -37,8 +36,14 @@ object NcpPackageReader {
 
         try {
             ZipFile(file).use { zip ->
-                val entries = Collections.list(zip.entries())
-                if (entries.size > MAX_ENTRIES) fail("NCP_LIMIT_EXCEEDED", "archive contains more than $MAX_ENTRIES entries")
+                val entries = ArrayList<java.util.zip.ZipEntry>()
+                val enumeration = zip.entries()
+                while (enumeration.hasMoreElements()) {
+                    if (entries.size >= MAX_ENTRIES) {
+                        fail("NCP_LIMIT_EXCEEDED", "archive contains more than $MAX_ENTRIES entries")
+                    }
+                    entries += enumeration.nextElement()
+                }
                 NcpZipMetadataGuard.validate(file, entries.map { it.name })
 
                 val seen = HashSet<String>()
