@@ -51,8 +51,10 @@ jobs:
           mkdir -p NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core
           cp patches/NcpManifestSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpManifestSelfTest.kt
           cp patches/NcpPackageReader.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpPackageReader.kt
+          cp patches/NcpPackageStore.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpPackageStore.kt
           cp patches/NcpZipMetadataGuard.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpZipMetadataGuard.kt
           cp patches/NcpPackageReaderSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpPackageReaderSelfTest.kt
+          cp patches/NcpPackageStoreSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpPackageStoreSelfTest.kt
           cp patches/AndroidGameDiscovery-artifact-digests.kt NeoCraft/android-integration/src/main/kotlin/org/neocraft/neomod/android/AndroidGameDiscovery.kt
           cp patches/MainActivity-diagnostics.kt NeoCraft/app/src/main/java/org/neocraft/launcher/MainActivity.kt
       - name: Set up JDK 17
@@ -78,10 +80,15 @@ jobs:
               classpath = sourceSets["test"].runtimeClasspath
               mainClass.set("org.neocraft.neomod.core.NcpPackageReaderSelfTestKt")
           }
+          tasks.register<JavaExec>("ncpPackageStoreSelfTest") {
+              dependsOn(tasks.testClasses)
+              classpath = sourceSets["test"].runtimeClasspath
+              mainClass.set("org.neocraft.neomod.core.NcpPackageStoreSelfTestKt")
+          }
           EOF
       - name: Run NeoMod core self-tests
         working-directory: NeoCraft
-        run: gradle --no-daemon :neomod-core:selfTest :neomod-core:ncpManifestSelfTest :neomod-core:ncpPackageReaderSelfTest
+        run: gradle --no-daemon :neomod-core:selfTest :neomod-core:ncpManifestSelfTest :neomod-core:ncpPackageReaderSelfTest :neomod-core:ncpPackageStoreSelfTest
       - name: Build debug APK
         working-directory: NeoCraft
         run: gradle --no-daemon :app:assembleDebug
