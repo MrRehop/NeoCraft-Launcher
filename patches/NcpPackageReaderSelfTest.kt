@@ -41,6 +41,31 @@ private fun readNcpTestU32(raf: RandomAccessFile, offset: Long): Long {
         ((c.toLong() and 0xff) shl 16) or ((d.toLong() and 0xff) shl 24)
 }
 
+private fun changeFirstNcpLocalCompressionMethod(file: File, method: Int) {
+    RandomAccessFile(file, "rw").use { raf ->
+        val length = raf.length()
+        val searchStart = (length - 22 - 65_535).coerceAtLeast(0)
+        var eocd = -1L
+        var position = length - 22
+        while (position >= searchStart) {
+            if (readNcpTestU32(raf, position) == 0x06054B50L &&
+                position + 22L + readNcpTestU16(raf, position + 20) == length) {
+                eocd = position
+                break
+            }
+            position--
+        }
+        check(eocd >= 0)
+        val centralOffset = readNcpTestU32(raf, eocd + 16)
+        check(readNcpTestU32(raf, centralOffset) == 0x02014B50L)
+        val localOffset = readNcpTestU32(raf, centralOffset + 42)
+        check(readNcpTestU32(raf, localOffset) == 0x04034B50L)
+        raf.seek(localOffset + 8)
+        raf.write(method and 0xff)
+        raf.write((method ushr 8) and 0xff)
+    }
+}
+
 private fun markFirstNcpCentralEntryAsUnixSymlink(file: File) {
     RandomAccessFile(file, "rw").use { raf ->
         val length = raf.length()
@@ -134,6 +159,17 @@ fun main() {
             try {
                 val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
                 check(error is NcpValidationException && error.code == "NCP_FILE_INVENTORY_MISMATCH")
+            } finally { file.delete() }
+        },
+        "local and central compression methods must match" to {
+            val file = makeNcpTestArchive(listOf(
+                "manifest.json" to ncpTestManifest(),
+                "content/data.txt" to payload,
+            ))
+            try {
+                changeFirstNcpLocalCompressionMethod(file, 99)
+                val error = runCatching { NcpPackageReader.validate(file) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_ARCHIVE_INVALID")
             } finally { file.delete() }
         },
         "Unix symbolic link metadata rejected" to {
