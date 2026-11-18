@@ -436,6 +436,7 @@ class MainActivity : Activity() {
                 arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"),
             )
         }
+        ncpButton.isEnabled = false
         try {
             startActivityForResult(picker, REQUEST_NCP_PACKAGE)
         } catch (error: android.content.ActivityNotFoundException) {
@@ -470,8 +471,9 @@ class MainActivity : Activity() {
         inspectionExecutor.execute {
             var stagedFile: java.io.File? = null
             val display = try {
-                stagedFile = copyNcpToCache(uri)
-                val report = NcpPackageReader.validate(stagedFile)
+                val staged = copyNcpToCache(uri)
+                stagedFile = staged
+                val report = NcpPackageReader.validate(staged)
                 buildString {
                     appendLine("NCP-пакет проверен")
                     appendLine("Название: ${report.manifest.name}")
