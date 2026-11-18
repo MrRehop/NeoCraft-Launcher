@@ -1,51 +1,57 @@
-# First Android device test
+# Android device testing
 
-## Current build status
+## Current PR-branch build
 
-The latest successful Android debug build is GitHub Actions [run #87](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44104318461), completed on 2026-11-17 at 14:34 UTC from commit `0e86cfda3220bc37b324c35f62d02b75068f1d4b`.
+The latest verified PR-branch Android debug build is GitHub Actions [run #120](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264), completed on 2026-11-18 from commit `e33cf63f2e79543ecb9b461571014a8e2e877d33`.
 
-Artifact: `neocraft-debug-apk`, 898,289 bytes. Artifact ZIP SHA-256: `970ceb4fb22f11b3d13fb8512634248be90fdef196cfac6be7db0348e6d0b06b`. It expires on 2027-02-15 at 14:32:59 UTC. The artifact is from before the transactional NCP package-store changes; it must not be presented as containing that newer code.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264/artifacts/14437983566), 909,725 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `fce927f42dddc2e3ca83ba92722deac97b0c9d227aab6d977f8180cf5f08cd04`. It expires on 2027-02-16 at 14:57:51 UTC.
 
-The subsequent PR workflow [run #101](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44119819515), from commit `a91db8e5c5ce0e1944ddf455745175c1e6ef565c`, failed in `ncpPackageStoreSelfTest`. The core tests (48/48), NCP manifest tests (14/14), and NCP package-reader tests (11/11) passed. Four package-store tests passed before the tamper test failed because its fixture changed the payload length, triggering the size check before the hash check. No APK artifact was produced by run #101. The fixture has been corrected to preserve the original byte length; that correction still needs a CI run.
+This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all seven self-test groups:
+- NeoMod core: 14/14
+- legacy package reader: 14/14
+- package manager: 11/11
+- game-build identity: 9/9
+- NCP manifest: 14/14
+- NCP package reader: 11/11
+- NCP package store: 9/9
 
-## Install the last successful debug APK on the Samsung Android device
+## Install on the Samsung Android device
 
-1. Open the [successful build run #87](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44104318461).
-2. Scroll to **Artifacts** and download **neocraft-debug-apk**.
-3. Open the downloaded ZIP and extract `app-debug.apk`.
-4. Tap `app-debug.apk`. If Android asks, allow the file manager or browser to install this APK. Only grant this permission to the app you used to download the project artifact; you can revoke it afterward.
+1. Open the run #120 link above.
+2. In **Artifacts**, download `neocraft-debug-apk`.
+3. Extract `app-debug.apk` from the downloaded ZIP.
+4. Tap the APK and allow installation for the file manager/browser if Android requests it.
 5. Install and open **NeoCraft Launcher**.
 
-Do not uninstall, replace, or modify Minecraft PE Patched for this test.
+Do not uninstall, replace, or modify Minecraft PE Patched. If Android refuses to update NeoCraft because the signing certificate differs from an older debug build, remove only the old NeoCraft app and install the new debug APK; this may clear NeoCraft's local data.
 
-## Test launching the installed game
+## Test Minecraft discovery and launch
 
-1. Tap **Проверить Minecraft** and wait until the inspection finishes.
-2. If the game is found, the **Запустить Minecraft** button becomes available.
-3. Tap **Запустить Minecraft**. NeoCraft should open the installed `com.mojang.minecraftpe` package using Android's launch intent.
-4. Confirm that Minecraft opens normally. This test does not install, patch, or modify Minecraft.
+1. Tap **Проверить Minecraft**.
+2. Confirm the displayed package is `com.mojang.minecraftpe`.
+3. If found, tap **Запустить Minecraft**.
+4. Confirm Minecraft opens normally.
 
-**Earlier device test result (2026-11-15): PASS.** The user confirmed that Minecraft opened successfully from NeoCraft on an earlier debug build (run [43669593047](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43669593047)). This verifies package discovery and launch-intent handoff on the tested device/build; it does not verify NeoMod runtime integration. Run #87 has not been tested on the physical device.
+An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #120 has not yet been tested on the device. Launching the game does not prove NeoMod runtime compatibility.
 
-If Android reports that the launch activity is unavailable, record the exact message. Do not uninstall or replace the game.
+## Test the NCP picker
 
-## Collect the game identity report
+1. Tap **Проверить NCP-пакет**.
+2. Select a trusted `.ncp` file using Android's document picker.
+3. For a valid NCP v1 package, NeoCraft should display its name, ID, version, number of verified payload files, and archive size.
+4. For an invalid or unsupported archive, NeoCraft should show a rejection reason.
+5. Repeat with a file larger than 128 MiB; the import staging step should reject it before NCP validation.
 
-1. In NeoCraft, tap **Проверить Minecraft**.
-2. Wait for the result. APK and DEX inspection runs in a background worker; unusually large DEX files or tables are skipped at configured safety limits.
-3. Tap **Скопировать диагностику**.
-4. Paste the complete copied report into the NeoCraft development conversation.
+The picker copies the selected document to NeoCraft's private cache, applies a 128 MiB streaming limit, runs read-only validation, and deletes the temporary copy. It does not install, activate, execute, or load package content into Minecraft. The transactional package store is not yet connected to the Android screen.
 
-The report is expected to include the installed package name, Android version code, version name, current signer SHA-256, readable installed APK/split SHA-256 digests, the declared Application class and app component factory, and a bounded structural inventory of the APK/DEX files.
+## Collect Minecraft diagnostics
 
-## How to interpret the result
+1. Tap **Проверить Minecraft** and wait for the background inspection.
+2. Tap **Скопировать диагностику**.
+3. Review the text and paste the report into the NeoCraft development conversation.
 
-- **Minecraft найдена** means Android PackageManager could read the installed package.
-- **Совместимость не подтверждена** is currently expected: the reviewed game-build allow-list is deliberately empty.
-- The reported Minecraft PE 1.26.13.1 build is recorded as a discovered candidate only. Its APK/signing identity has not been independently verified from an exported APK, and no NeoMod compatibility probe has passed.
-- Discovery and APK inspection do not prove that NeoMod can modify Minecraft or that offline/LAN works.
-- This is a debug build for testing, not a production/release APK.
+The reviewed game-build allow-list remains intentionally empty. The reported Minecraft PE Patched 1.26.13.1 identity is a candidate only; the original APK has not yet been independently re-hashed in the current build environment, and no NeoMod runtime probe has passed.
 
-## Privacy note
+## Privacy and safety
 
-Review the diagnostic text before sharing it. It contains technical package and APK structure details, but should not contain passwords or account credentials. Do not send private keys, signing keystores, or GitHub tokens.
+Do not share passwords, GitHub tokens, signing keystores, or private keys. Do not install untrusted NCP packages. NCP validation is not publisher authentication and does not establish that a package is safe or compatible.

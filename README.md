@@ -1,26 +1,35 @@
 # NeoCraft Launcher
 
-NeoCraft is an open-source Android launcher project for Minecraft PE Patched, with the NeoMod modification system and planned offline/LAN support.
+NeoCraft is an open-source Android launcher for an already-installed Minecraft PE Patched build. The project is developing its own NeoMod package system. Offline/LAN support is a future goal, not a current feature.
 
-## Source snapshot and build
+## Source and build
 
-The Stage 9 source snapshot is available in [`NeoCraft-NeoMod-Stage9-clean.zip`](./NeoCraft-NeoMod-Stage9-clean.zip). The Android workflow extracts it and applies the reviewed integration patches from [`patches/`](./patches).
+The Stage 9 source snapshot is available as [`NeoCraft-NeoMod-Stage9-clean.zip`](./NeoCraft-NeoMod-Stage9-clean.zip). The Android GitHub Actions workflow extracts that snapshot and applies the integration sources in [`patches/`](./patches).
 
-The repository-level GitHub Actions workflow at [`.github/workflows/android-apk.yml`](./.github/workflows/android-apk.yml) builds a debug APK and uploads it as the `neocraft-debug-apk` artifact.
+The current NCP implementation and Android picker are being developed in [Pull Request #1](https://github.com/MrRehop/NeoCraft-Launcher/pull/1), branch `feature/ncp-package-reader`. The PR is still a draft and has not been merged into `main`.
 
-## Current verified status
+## Latest verified PR-branch build
 
-- Latest successful Android debug build: [workflow run #55](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/43724522041), completed on 2026-11-15 at 14:29 UTC.
-- Run #55 uploaded `neocraft-debug-apk`: an 886,438-byte ZIP containing an 893,464-byte `app-debug.apk`. The artifact expires on 2027-02-13 at 14:28 UTC.
-- Verified SHA-256: artifact ZIP `2b789057ef41b15f4e51e803350c2d4545a3d41a00ee6d1e746e82488c7da838`; APK `28fc0987bca1e83306990f3bb4226ba9907e3aaeba50f18847db493ce21098b4`.
-- The APK manifest identifies the launcher as `org.neocraft.launcher`, version `0.1.0` (versionCode `1`), minSdk `26`, targetSdk `35`.
-- The latest build moves APK/DEX inspection off the UI thread, applies explicit DEX inspection limits, includes the NCP v1 manifest decoder, and runs the core and NCP self-tests before building.
-- The shared JSON parser now rejects manifest text over 256 KiB and nesting deeper than 64 containers.
-- An earlier physical-device test on 2026-11-15 reported successful Minecraft discovery and launch-intent handoff. Run #55 itself has not yet been retested on the device.
-- The reviewed game-build allow-list is intentionally empty. Detecting or launching Minecraft does not mean NeoMod compatibility is confirmed.
-- NCP v1 manifest decoding is implemented and self-tested; ZIP package inspection and payload inventory/hash verification remain pending. No in-game mod injection or resource loading is claimed.
+- GitHub Actions [run #120](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264) completed successfully on 2026-11-18 from commit `e33cf63f2e79543ecb9b461571014a8e2e877d33`.
+- Artifact: `neocraft-debug-apk`, 909,725 bytes (workflow artifact ZIP).
+- Artifact ZIP SHA-256: `fce927f42dddc2e3ca83ba92722deac97b0c9d227aab6d977f8180cf5f08cd04`.
+- The artifact expires on 2027-02-16 at 14:57:51 UTC.
+- CI used JDK 17 and Gradle 8.7. The `:app:assembleDebug` task completed successfully and the artifact was uploaded.
+- Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP ZIP reader 11/11; NCP package store 9/9.
+- The Android screen includes **Проверить NCP-пакет**. It opens the Android document picker, copies a selected archive to private cache with a 128 MiB input limit, validates it with the NCP reader, displays package metadata, and deletes the temporary copy. It does not install or activate the package.
+- Run #120 has not yet been tested on the physical Samsung device.
+
+See [device testing](./docs/DEVICE_TESTING.md) for installation and manual checks.
+
+## Current implementation boundaries
+
+- Minecraft package discovery, identity diagnostics, and launch-intent handoff are implemented.
+- The reviewed Minecraft build allow-list is intentionally empty. Discovering or launching a game does not establish NeoMod compatibility.
+- Minecraft PE Patched 1.26.13.1 (`com.mojang.minecraftpe`, versionCode `972601301`) is recorded as a candidate from the device report only. Its exported APK and signer identity have not been independently re-hashed in the current build environment, and no runtime compatibility probe has passed.
+- NCP v1 manifest decoding, read-only ZIP validation, ZIP metadata checks, and a transactional data-only package store are implemented on the PR branch and pass the listed CI tests.
+- The Android NCP picker currently validates packages only. The package store is not yet connected to the screen.
+- NCP dependency resolution, NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
+- The legacy `.nmod` reader is separate from NCP and must not be treated as an NCP reader.
 - Offline/LAN multiplayer remains planned, not implemented.
 
-## Device test
-
-See [`docs/DEVICE_TESTING.md`](./docs/DEVICE_TESTING.md) for downloading the latest debug artifact, installing it on Android, and sending the diagnostic report back for review.
+No in-game mod injection, native patching, or Minecraft modification is claimed.
