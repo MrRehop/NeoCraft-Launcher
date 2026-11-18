@@ -131,14 +131,14 @@ fun main() {
             val archive = ncpStoreArchive()
             val link = Files.createTempFile("ncp-store-source-link-", ".ncp")
             try {
-                Files.delete(link.toPath())
-                Files.createSymbolicLink(link.toPath(), archive.toPath())
+                Files.delete(link)
+                Files.createSymbolicLink(link, archive.toPath())
                 val store = NcpPackageStore(root)
-                val error = runCatching { store.install(link) }.exceptionOrNull()
+                val error = runCatching { store.install(link.toFile()) }.exceptionOrNull()
                 check(error is NcpValidationException && error.code == "NCP_ARCHIVE_INVALID")
                 check(store.listInstalled().isEmpty())
             } finally {
-                Files.deleteIfExists(link.toPath())
+                Files.deleteIfExists(link)
                 archive.delete()
                 root.deleteRecursively()
             }
