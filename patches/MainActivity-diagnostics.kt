@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.Button
@@ -14,6 +16,7 @@ import org.neocraft.neomod.android.AndroidGameDiscovery
 import org.neocraft.neomod.android.GameDiscoveryResult
 import org.neocraft.neomod.core.GameBuildMatch
 import org.neocraft.neomod.core.ReviewedGameBuilds
+import org.neocraft.neomod.core.NcpPackageReader
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
@@ -21,11 +24,14 @@ class MainActivity : Activity() {
     private lateinit var checkButton: Button
     private lateinit var launchButton: Button
     private lateinit var copyButton: Button
+    private lateinit var ncpButton: Button
     private var diagnosticReport: String? = null
     private val inspectionExecutor = Executors.newSingleThreadExecutor()
     private var inspectionToken = 0
 
     private companion object {
+        const val REQUEST_NCP_PACKAGE = 4101
+        const val MAX_NCP_ARCHIVE_BYTES = 128L * 1024 * 1024
         const val MAX_DEX_BYTES = 64 * 1024 * 1024
         const val MAX_DEX_FILES = 8
         const val MAX_DEX_STRINGS = 1_000_000
@@ -67,6 +73,10 @@ class MainActivity : Activity() {
             isEnabled = false
             setOnClickListener { copyDiagnostics() }
         }
+        ncpButton = Button(this).apply {
+            text = "Проверить NCP-пакет"
+            setOnClickListener { chooseNcpPackage() }
+        }
         val mods = Button(this).apply {
             text = "NeoMod — скоро"
             isEnabled = false
@@ -76,6 +86,7 @@ class MainActivity : Activity() {
         layout.addView(checkButton)
         layout.addView(launchButton)
         layout.addView(copyButton)
+        layout.addView(ncpButton)
         layout.addView(mods)
         setContentView(layout)
     }
@@ -85,6 +96,7 @@ class MainActivity : Activity() {
         copyButton.isEnabled = false
         launchButton.isEnabled = false
         checkButton.isEnabled = false
+        ncpButton.isEnabled = false
         status.text = "Проверка Minecraft и анализ APK…"
         val request = ++inspectionToken
 
@@ -149,6 +161,7 @@ class MainActivity : Activity() {
                 copyButton.isEnabled = true
                 launchButton.isEnabled = result is GameDiscoveryResult.Found
                 checkButton.isEnabled = true
+                ncpButton.isEnabled = true
             }
         }
     }
@@ -411,6 +424,109 @@ class MainActivity : Activity() {
             lines.joinToString("\n")
         } catch (error: Exception) {
             "Android component scan failed: " + error.javaClass.simpleName + ": " + (error.message ?: "no details")
+        }
+    }
+
+    private fun chooseNcpPackage() {
+        val picker = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"),
+            )
+        }
+        ncpButton.isEnabled = false
+        try {
+            startActivityForResult(picker, REQUEST_NCP_PACKAGE)
+        } catch (error: android.content.ActivityNotFoundException) {
+            ncpButton.isEnabled = true
+            Toast.makeText(this, "Не удалось открыть выбор файлов: ${error.message ?: "нет подробностей"}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    @Deprecated("Legacy activity-result API is retained for the minSdk-compatible launcher Activity")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_NCP_PACKAGE) return
+        if (resultCode != RESULT_OK) {
+            ncpButton.isEnabled = true
+            return
+        }
+        val uri = data?.data
+        if (uri == null) {
+            ncpButton.isEnabled = true
+            Toast.makeText(this, "Файл не выбран", Toast.LENGTH_SHORT).show()
+            return
+        }
+        validateNcpPackage(uri)
+    }
+
+    private fun validateNcpPackage(uri: Uri) {
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        status.text = "Проверка NCP-пакета…"
+
+        inspectionExecutor.execute {
+            var stagedFile: java.io.File? = null
+            val display = try {
+                val staged = copyNcpToCache(uri)
+                stagedFile = staged
+                val report = NcpPackageReader.validate(staged)
+                buildString {
+                    appendLine("NCP-пакет проверен")
+                    appendLine("Название: ${report.manifest.name}")
+                    appendLine("ID: ${report.manifest.id}")
+                    appendLine("Версия: ${report.manifest.version}")
+                    appendLine("Проверено файлов: ${report.verifiedFiles.size}")
+                    appendLine("Размер архива: ${report.archiveBytes} байт")
+                    appendLine("Режим: только проверка; установка и активация не выполнялись")
+                }
+            } catch (error: Exception) {
+                "NCP-пакет отклонён\nПричина: ${error.message ?: error.javaClass.simpleName}"
+            } finally {
+                stagedFile?.delete()
+            }
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                status.text = display
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+            }
+        }
+    }
+
+    /** Copies a user-selected document into private cache with the same 128 MiB cap as NCP v1. */
+    private fun copyNcpToCache(uri: Uri): java.io.File {
+        val staged = java.io.File.createTempFile("neocraft-ncp-", ".ncp", cacheDir)
+        try {
+            val source = contentResolver.openInputStream(uri)
+                ?: throw java.io.IOException("Android не предоставил поток для выбранного файла")
+            source.use { input ->
+                staged.outputStream().use { output ->
+                    val buffer = ByteArray(16 * 1024)
+                    var total = 0L
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        if (count == 0) continue
+                        total += count
+                        if (total > MAX_NCP_ARCHIVE_BYTES) {
+                            throw java.io.IOException("NCP-архив превышает лимит 128 MiB")
+                        }
+                        output.write(buffer, 0, count)
+                    }
+                }
+            }
+            if (staged.length() == 0L) {
+                throw java.io.IOException("Выбранный файл пуст")
+            }
+            return staged
+        } catch (error: Throwable) {
+            staged.delete()
+            throw error
         }
     }
 

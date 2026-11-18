@@ -1,6 +1,6 @@
 # NeoMod architecture baseline
 
-Status: DESIGN DRAFT — NOT IMPLEMENTED
+Status: DESIGN DRAFT — RUNTIME NOT IMPLEMENTED; PACKAGE CORE IN REVIEW
 
 This document records the current architectural direction for NeoCraft. It is a design baseline, not a claim that Minecraft runtime integration already exists.
 
@@ -18,7 +18,7 @@ The native package extension is `.ncp` (NeoCraft Package).
 
 An NCP package describes content and its requirements. The package format must be independent of any particular Minecraft build and independent of the implementation language used by a mod.
 
-**NCP v1 container decision:** ZIP with the `.ncp` extension, root `manifest.json`, and payload under `content/`. The initial contract is documented in [NCP_FORMAT_V1.md](NCP_FORMAT_V1.md), with a JSON Schema and example manifest. A strict NCP v1 manifest decoder is now supplied through the CI source overlay and has dedicated JVM self-tests. The ZIP package reader, exact archive/file-inventory comparison, streaming SHA-256 verification, and NCP installation path remain unimplemented. Publisher signing remains outside v1.
+**NCP v1 container decision:** ZIP with the `.ncp` extension, root `manifest.json`, and payload under `content/`. The initial contract is documented in [NCP_FORMAT_V1.md](NCP_FORMAT_V1.md), with a JSON Schema and example manifest. The PR #1 branch supplies a strict manifest decoder, read-only ZIP reader and metadata guard, and transactional data-only package store through the CI source overlay. The implementation and self-tests are in review; the latest recorded CI run failed in the package-store tamper-test fixture, so this branch state is not yet fully verified. Publisher signing remains outside v1.
 
 Every package must contain a manifest with at least:
 
@@ -112,18 +112,23 @@ Breaking changes require a new major API version and an explicit migration path.
 
 ## 10. Current implementation status
 
-The repository currently contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, a legacy `.nmod` package reader/manager from the Stage 9 source archive, a separate NCP v1 manifest decoder supplied by the CI overlay, and a CI debug-APK build. The legacy `.nmod` reader is not an NCP reader and must not be treated as accepting `.ncp` files.
+The repository contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, and a legacy `.nmod` package reader/manager from the Stage 9 source archive. The legacy `.nmod` reader is not an NCP reader and must not be treated as accepting `.ncp` files.
 
-The following are not yet implemented or verified:
+The PR #1 branch additionally supplies an NCP v1 manifest decoder, ZIP metadata guard and read-only package validator, and transactional local package store. These are added through the CI source overlay rather than committed into the Stage 9 archive. Their latest recorded workflow run (#101, commit `a91db8e5`) passed 48/48 core tests, 14/14 NCP manifest tests and 11/11 package-reader tests, but failed in the package-store tamper self-test. The fixture changed the payload length, so the store correctly reported a size mismatch before the expected hash mismatch. The fixture has been corrected in commit `ad1372b0`; a CI run on that correction is pending, and run #101 did not produce an APK.
 
-- NCP v1 manifest decoder (implemented and self-tested); ZIP archive inspection, exact file-inventory checks, streaming size/SHA-256 verification, and NCP installation path not yet implemented;
+The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate in `patches/candidate-builds/`. It is not reviewed or enabled: the reported package, signer and APK digest have not been independently rechecked from an exported APK, and no NeoMod compatibility probe has passed. `ReviewedGameBuilds` must remain empty for this candidate.
+
+The following remain unimplemented or unverified:
+
 - package signature/trust model;
-- dependency resolver;
-- namespaced content registry;
-- conflict engine;
-- profile activation and rollback;
+- dependency resolver for NCP;
+- namespaced content registry for NCP;
+- conflict engine for NCP;
+- NCP profile activation and rollback;
 - in-game NeoMod runtime;
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
+
+The NCP package store is data-only. It does not load content into Minecraft, resolve or activate dependency graphs, enforce runtime capabilities, execute package code, or provide rollback of a running game.
 
 This status must be updated only when code and tests demonstrate the feature.
