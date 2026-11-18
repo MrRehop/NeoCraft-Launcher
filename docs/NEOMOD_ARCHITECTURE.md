@@ -113,16 +113,16 @@ The repository contains launcher-side Minecraft discovery and diagnostics, a rev
 
 The PR #1 branch adds the NCP v1 manifest decoder, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation picker through the CI source overlay.
 
-GitHub Actions [run #120](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264), commit `e33cf63f2e79543ecb9b461571014a8e2e877d33`, completed successfully on 2026-11-18. It passed:
+GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382), commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`, completed successfully on 2026-11-18. It passed:
 - NeoMod core: 14/14;
 - legacy package reader: 14/14;
 - package manager: 11/11;
 - game-build identity: 9/9;
 - NCP manifest: 14/14;
-- NCP package reader: 11/11;
+- NCP package reader: 12/12;
 - NCP package store: 9/9.
 
-The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
+The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The checked-in Hello World NCP sample passed the NCP reader self-test in run #123. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
 
 The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate. It is not reviewed or enabled: the original APK/signing identity has not been independently re-hashed in the current build environment, and no NeoMod compatibility probe has passed. `ReviewedGameBuilds` must remain empty for this candidate.
 

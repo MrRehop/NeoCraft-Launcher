@@ -2,9 +2,9 @@
 
 ## Current PR-branch build
 
-The latest verified PR-branch Android debug build is GitHub Actions [run #120](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264), completed on 2026-11-18 from commit `e33cf63f2e79543ecb9b461571014a8e2e877d33`.
+The latest verified PR-branch Android debug build is GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382), completed on 2026-11-18 from commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264/artifacts/14437983566), 909,725 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `fce927f42dddc2e3ca83ba92722deac97b0c9d227aab6d977f8180cf5f08cd04`. It expires on 2027-02-16 at 14:57:51 UTC.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382/artifacts/14440075419), 909,728 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `eced582bc6a4460dbc33fa3bb976cfbdb08eb3a50a1606addf08f136f8ad61c4`. It expires on 2027-02-16 at 15:02:11 UTC.
 
 This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all seven self-test groups:
 - NeoMod core: 14/14
@@ -12,12 +12,12 @@ This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI 
 - package manager: 11/11
 - game-build identity: 9/9
 - NCP manifest: 14/14
-- NCP package reader: 11/11
+- NCP package reader: 12/12
 - NCP package store: 9/9
 
 ## Install on the Samsung Android device
 
-1. Open the run #120 link above.
+1. Open the run #123 link above.
 2. In **Artifacts**, download `neocraft-debug-apk`.
 3. Extract `app-debug.apk` from the downloaded ZIP.
 4. Tap the APK and allow installation for the file manager/browser if Android requests it.

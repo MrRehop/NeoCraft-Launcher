@@ -10,12 +10,12 @@ The current NCP implementation and Android picker are being developed in [Pull R
 
 ## Latest verified PR-branch build
 
-- GitHub Actions [run #120](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330094264) completed successfully on 2026-11-18 from commit `e33cf63f2e79543ecb9b461571014a8e2e877d33`.
-- Artifact: `neocraft-debug-apk`, 909,725 bytes (workflow artifact ZIP).
-- Artifact ZIP SHA-256: `fce927f42dddc2e3ca83ba92722deac97b0c9d227aab6d977f8180cf5f08cd04`.
-- The artifact expires on 2027-02-16 at 14:57:51 UTC.
+- GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382) completed successfully on 2026-11-18 from commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`.
+- Artifact: `neocraft-debug-apk`, 909,728 bytes (workflow artifact ZIP).
+- Artifact ZIP SHA-256: `eced582bc6a4460dbc33fa3bb976cfbdb08eb3a50a1606addf08f136f8ad61c4`.
+- The artifact expires on 2027-02-16 at 15:02:11 UTC.
 - CI used JDK 17 and Gradle 8.7. The `:app:assembleDebug` task completed successfully and the artifact was uploaded.
-- Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP ZIP reader 11/11; NCP package store 9/9.
+- Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP ZIP reader 12/12; NCP package store 9/9.
 - A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
 - The Android screen includes **Проверить NCP-пакет**. It opens the Android document picker, copies a selected archive to private cache with a 128 MiB input limit, validates it with the NCP reader, displays package metadata, and deletes the temporary copy. It does not install or activate the package.
 - Run #120 has not yet been tested on the physical Samsung device.
