@@ -126,6 +126,43 @@ fun main() {
                 root.deleteRecursively()
             }
         },
+        "symbolic-link archive source is rejected" to {
+            val root = Files.createTempDirectory("ncp-store-source-link-").toFile()
+            val archive = ncpStoreArchive()
+            val link = Files.createTempFile("ncp-store-source-link-", ".ncp")
+            try {
+                Files.delete(link.toPath())
+                Files.createSymbolicLink(link.toPath(), archive.toPath())
+                val store = NcpPackageStore(root)
+                val error = runCatching { store.install(link) }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_ARCHIVE_INVALID")
+                check(store.listInstalled().isEmpty())
+            } finally {
+                Files.deleteIfExists(link.toPath())
+                archive.delete()
+                root.deleteRecursively()
+            }
+        },
+        "symbolic-link payload tampering is rejected without following target" to {
+            val root = Files.createTempDirectory("ncp-store-payload-link-").toFile()
+            val archive = ncpStoreArchive()
+            val outside = Files.createTempFile("ncp-store-outside-", ".txt")
+            Files.writeString(outside, "outside")
+            try {
+                val store = NcpPackageStore(root)
+                val installed = store.install(archive)
+                val payload = installed.directory.toPath().resolve("content/data.txt")
+                Files.delete(payload)
+                Files.createSymbolicLink(payload, outside)
+                val error = runCatching { store.listInstalled() }.exceptionOrNull()
+                check(error is NcpValidationException && error.code == "NCP_STORE_INVALID")
+                check(Files.readString(outside) == "outside")
+            } finally {
+                archive.delete()
+                root.deleteRecursively()
+                Files.deleteIfExists(outside)
+            }
+        },
         "uninstall removes only requested version" to {
             val root = Files.createTempDirectory("ncp-store-uninstall-").toFile()
             val first = ncpStoreArchive("1.0.0")
