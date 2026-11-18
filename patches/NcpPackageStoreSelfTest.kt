@@ -117,7 +117,8 @@ fun main() {
             try {
                 val store = NcpPackageStore(root)
                 store.install(archive)
-                root.resolve("packages/sample_pack/1.0.0/content/data.txt").writeText("changed")
+                // Keep the original byte length so the integrity check reaches SHA-256.
+                root.resolve("packages/sample_pack/1.0.0/content/data.txt").writeText("xxxxx")
                 val error = runCatching { store.listInstalled() }.exceptionOrNull()
                 check(error is NcpValidationException && error.code == "NCP_HASH_MISMATCH")
             } finally {
