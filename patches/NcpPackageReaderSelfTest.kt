@@ -139,7 +139,7 @@ fun main() {
     val payload = "hello".toByteArray()
     val tests = listOf(
         "checked-in hello-world NCP example validates" to {
-            val sample = File("../examples/hello-world.ncp")
+            val sample = File("../../examples/hello-world.ncp")
             check(sample.isFile) { "examples/hello-world.ncp is missing from the repository checkout" }
             val report = NcpPackageReader.validate(sample)
             check(report.manifest.id == "hello_world")
