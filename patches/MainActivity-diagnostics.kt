@@ -482,7 +482,7 @@ class MainActivity : Activity() {
                     appendLine("Режим: только проверка; установка и активация не выполнялись")
                 }
             } catch (error: Exception) {
-                "NCP-пакет отклонён\\nПричина: ${error.message ?: error.javaClass.simpleName}"
+                "NCP-пакет отклонён\nПричина: ${error.message ?: error.javaClass.simpleName}"
             } finally {
                 stagedFile?.delete()
             }
