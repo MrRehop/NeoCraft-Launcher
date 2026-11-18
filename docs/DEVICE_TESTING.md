@@ -36,6 +36,8 @@ An earlier physical-device test on 2026-11-15 confirmed successful Minecraft dis
 
 ## Test the NCP picker
 
+Download the safe [Hello World sample NCP package](https://raw.githubusercontent.com/MrRehop/NeoCraft-Launcher/feature/ncp-package-reader/examples/hello-world.ncp) to the phone first. It contains only a five-byte text payload and no executable code.
+
 1. Tap **Проверить NCP-пакет**.
 2. Select a trusted `.ncp` file using Android's document picker.
 3. For a valid NCP v1 package, NeoCraft should display its name, ID, version, number of verified payload files, and archive size.

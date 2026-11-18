@@ -138,6 +138,14 @@ private fun ncpTestManifest(hash: String = ncpTestHash("hello".toByteArray()), s
 fun main() {
     val payload = "hello".toByteArray()
     val tests = listOf(
+        "checked-in hello-world NCP example validates" to {
+            val sample = File("../examples/hello-world.ncp")
+            check(sample.isFile) { "examples/hello-world.ncp is missing from the repository checkout" }
+            val report = NcpPackageReader.validate(sample)
+            check(report.manifest.id == "hello_world")
+            check(report.manifest.version == "1.0.0")
+            check(report.verifiedFiles.single().sha256 == "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
+        },
         "valid archive and payload digest" to {
             val file = makeNcpTestArchive(listOf(
                 "manifest.json" to ncpTestManifest(),

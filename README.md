@@ -16,6 +16,7 @@ The current NCP implementation and Android picker are being developed in [Pull R
 - The artifact expires on 2027-02-16 at 14:57:51 UTC.
 - CI used JDK 17 and Gradle 8.7. The `:app:assembleDebug` task completed successfully and the artifact was uploaded.
 - Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP ZIP reader 11/11; NCP package store 9/9.
+- A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
 - The Android screen includes **Проверить NCP-пакет**. It opens the Android document picker, copies a selected archive to private cache with a 128 MiB input limit, validates it with the NCP reader, displays package metadata, and deletes the temporary copy. It does not install or activate the package.
 - Run #120 has not yet been tested on the physical Samsung device.
 
