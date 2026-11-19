@@ -1,6 +1,6 @@
 # NeoCraft Package (NCP) format — version 1
 
-Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, stable version-range evaluator, read-only ZIP validator, ZIP metadata guard, and transactional local package store are implemented on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. These operations store data only; runtime activation and Minecraft content loading remain unimplemented.
+Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, stable version-range evaluator, read-only ZIP validator, ZIP metadata guard, and transactional local package store are implemented on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. Access to a normalized storage root is serialized across multiple store instances so concurrent installs cannot race to commit the same package version. These operations store data only; runtime activation and Minecraft content loading remain unimplemented.
 
 ## 1. Container
 
