@@ -1,6 +1,6 @@
 # NeoCraft Package (NCP) format — version 1
 
-Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, read-only ZIP validator, ZIP metadata guard, and transactional local package store are implemented on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. These operations store data only; runtime activation and Minecraft content loading remain unimplemented.
+Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, stable version-range evaluator, read-only ZIP validator, ZIP metadata guard, and transactional local package store are implemented on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. These operations store data only; runtime activation and Minecraft content loading remain unimplemented.
 
 ## 1. Container
 
@@ -85,9 +85,9 @@ A package can pass NCP validation while its content remains unsupported by the i
 A dependency record contains `id` and `versionRange`. Version ranges use a deliberately limited syntax in v1:
 - exact: `1.2.3`
 - inclusive lower bound: `>=1.2.3`
-- bounded: `>=1.2.3 <2.0.0`
+- bounded: `>=1.2.3 <2.0.0` (lower bound inclusive, upper bound exclusive)
 
-Only stable SemVer versions are accepted in v1; prerelease/build metadata are rejected for package and API versions until resolver semantics are implemented and tested.
+The platform-neutral `NcpVersionRange` evaluator implements these forms and compares numeric components using arbitrary-precision integers. Unsupported forms, leading-zero components, and empty or reversed bounded ranges are rejected. This evaluator is not a dependency resolver: it does not choose package versions, build a dependency graph, or activate a profile. Only stable SemVer is accepted in v1; prerelease/build metadata are rejected.
 
 Mandatory dependency cycles are invalid. Optional dependencies do not make a package invalid when absent. Conflicts are explicit package IDs; declaring a conflict is not proof that all undeclared packages are compatible.
 
