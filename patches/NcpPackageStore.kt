@@ -13,6 +13,7 @@ import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipFile
 
 /**
@@ -33,16 +34,20 @@ class NcpPackageStore(storageDirectory: File) {
 
     private val root = storageDirectory.toPath().toAbsolutePath().normalize()
     private val packagesRoot = root.resolve("packages")
+    private val storeLock = ROOT_LOCKS.computeIfAbsent(root) { Any() }
 
     init {
-        synchronized(LOCK) {
+        synchronized(storeLock) {
             ensureDirectory(root)
             ensureDirectory(packagesRoot)
         }
     }
 
-    @Synchronized
-    fun install(packageFile: File): InstalledPackage {
+    fun install(packageFile: File): InstalledPackage = synchronized(storeLock) {
+        installLocked(packageFile)
+    }
+
+    private fun installLocked(packageFile: File): InstalledPackage {
         val source = packageFile.toPath().toAbsolutePath().normalize()
         if (!Files.isRegularFile(source, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(source)) {
             fail("NCP_ARCHIVE_INVALID", "source must be a regular non-symbolic-link file")
@@ -84,8 +89,11 @@ class NcpPackageStore(storageDirectory: File) {
         }
     }
 
-    @Synchronized
-    fun listInstalled(): List<InstalledPackage> {
+    fun listInstalled(): List<InstalledPackage> = synchronized(storeLock) {
+        listInstalledLocked()
+    }
+
+    private fun listInstalledLocked(): List<InstalledPackage> {
         if (!Files.exists(packagesRoot, LinkOption.NOFOLLOW_LINKS)) return emptyList()
         if (Files.isSymbolicLink(packagesRoot) || !Files.isDirectory(packagesRoot, LinkOption.NOFOLLOW_LINKS)) {
             fail("NCP_STORE_INVALID", "package store root is not a regular directory")
@@ -111,8 +119,11 @@ class NcpPackageStore(storageDirectory: File) {
         return result.sortedWith(compareBy<InstalledPackage> { it.id }.thenBy { it.version })
     }
 
-    @Synchronized
-    fun uninstall(id: String, version: String) {
+    fun uninstall(id: String, version: String) = synchronized(storeLock) {
+        uninstallLocked(id, version)
+    }
+
+    private fun uninstallLocked(id: String, version: String) {
         if (!PACKAGE_ID.matches(id) || !STABLE_VERSION.matches(version)) {
             fail("NCP_ID_INVALID", "invalid package ID or stable version")
         }
@@ -310,7 +321,9 @@ class NcpPackageStore(storageDirectory: File) {
         throw NcpValidationException(code, message)
 
     companion object {
-        private val LOCK = Any()
+        // Serialize mutations and inspection for the same normalized store root,
+        // even when callers create multiple NcpPackageStore instances.
+        private val ROOT_LOCKS = ConcurrentHashMap<Path, Any>()
         private val PACKAGE_ID = Regex("^[a-z][a-z0-9_]{1,47}$")
         private val STABLE_VERSION = Regex("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$")
         private const val BUFFER_SIZE = 16 * 1024
