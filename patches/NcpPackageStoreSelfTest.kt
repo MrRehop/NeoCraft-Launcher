@@ -3,6 +3,9 @@ package org.neocraft.neomod.core
 import java.io.File
 import java.nio.file.Files
 import java.security.MessageDigest
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -76,6 +79,52 @@ fun main() {
             } finally {
                 first.delete()
                 second.delete()
+                root.deleteRecursively()
+            }
+        },
+        "concurrent duplicate installs from separate store instances are serialized" to {
+            val root = Files.createTempDirectory("ncp-store-concurrent-").toFile()
+            val archive = ncpStoreArchive(payload = ByteArray(256 * 1024) { (it % 251).toByte() })
+            val workerCount = 8
+            val ready = CountDownLatch(workerCount)
+            val start = CountDownLatch(1)
+            val successes = AtomicInteger()
+            val duplicateErrors = AtomicInteger()
+            val unexpected = AtomicReference<Throwable?>(null)
+            val workers = (0 until workerCount).map {
+                Thread {
+                    val store = NcpPackageStore(root)
+                    ready.countDown()
+                    try {
+                        start.await()
+                        store.install(archive)
+                        successes.incrementAndGet()
+                    } catch (error: NcpValidationException) {
+                        if (error.code == "NCP_PACKAGE_ALREADY_INSTALLED") {
+                            duplicateErrors.incrementAndGet()
+                        } else {
+                            unexpected.compareAndSet(null, error)
+                        }
+                    } catch (error: Throwable) {
+                        unexpected.compareAndSet(null, error)
+                    }
+                }.apply { start() }
+            }
+            try {
+                ready.await()
+                start.countDown()
+                workers.forEach { it.join() }
+                check(unexpected.get() == null) { "unexpected concurrent install failure: ${unexpected.get()}" }
+                check(successes.get() == 1) { "expected one installer, got ${successes.get()}" }
+                check(duplicateErrors.get() == workerCount - 1) {
+                    "expected ${workerCount - 1} duplicate rejections, got ${duplicateErrors.get()}"
+                }
+                val installed = NcpPackageStore(root).listInstalled()
+                check(installed.size == 1)
+                check(installed.single().directory.resolve("content/data.txt").readBytes()
+                    .contentEquals(ByteArray(256 * 1024) { (it % 251).toByte() }))
+            } finally {
+                archive.delete()
                 root.deleteRecursively()
             }
         },
