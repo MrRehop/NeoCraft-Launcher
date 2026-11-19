@@ -21,7 +21,7 @@ An NCP package describes content and its requirements. The package format must b
 **NCP v1 container:** ZIP with the `.ncp` extension, root `manifest.json`, and payload under `content/`. The contract is documented in [NCP_FORMAT_V1.md](NCP_FORMAT_V1.md).
 
 The PR #1 branch supplies:
-- a strict NCP v1 manifest decoder;
+- a strict NCP v1 manifest decoder and stable version-range evaluator;
 - a read-only ZIP validator and ZIP metadata guard;
 - exact payload inventory, uncompressed-size, and SHA-256 verification;
 - a transactional data-only package store with staging, re-verification, atomic commit, listing, tamper detection, and uninstall;
@@ -51,7 +51,7 @@ A shared library is resolved once to a single compatible version for a selected 
 
 Optional integrations must be declared separately from mandatory dependencies.
 
-The NCP v1 manifest decoder validates dependency declarations, but the NCP dependency resolver is not yet implemented.
+The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. The dependency resolver that selects installed versions, constructs a graph, and detects unsatisfied transitive dependencies is not yet implemented.
 
 ## 5. Conflict model
 
@@ -111,7 +111,7 @@ Breaking changes require a new major API version and an explicit migration path.
 
 The repository contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, and a legacy `.nmod` package reader/manager from the Stage 9 source archive. The legacy `.nmod` reader is not an NCP reader and must not be treated as accepting `.ncp` files.
 
-The PR #1 branch adds the NCP v1 manifest decoder, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation picker through the CI source overlay.
+The PR #1 branch adds the NCP v1 manifest decoder, stable version-range evaluator, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation picker through the CI source overlay.
 
 GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382), commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`, completed successfully on 2026-11-18. It passed:
 - NeoMod core: 14/14;
@@ -138,4 +138,4 @@ The following remain unimplemented or unverified:
 
 The NCP package store is data-only. The Android picker currently validates a selected archive only. Neither component loads content into Minecraft, resolves or activates dependency graphs, enforces runtime capabilities, or executes package code.
 
-This status must be updated only when code and tests demonstrate the feature.
+The version-range evaluator and its self-test were added after run #123; they are wired into the workflow but have not yet been CI-verified.\n\nThis status must be updated only when code and tests demonstrate the feature.
