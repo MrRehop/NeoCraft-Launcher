@@ -51,7 +51,7 @@ A shared library is resolved once to a single compatible version for a selected 
 
 Optional integrations must be declared separately from mandatory dependencies.
 
-The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. The dependency resolver that selects installed versions, constructs a graph, and detects unsatisfied transitive dependencies is not yet implemented.
+The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It does not download/install packages, create profiles, or activate content. Optional dependencies are not auto-selected. Its self-tests are wired into GitHub Actions but have not yet passed a run.
 
 ## 5. Conflict model
 
@@ -138,4 +138,4 @@ The following remain unimplemented or unverified:
 
 The NCP package store is data-only. The Android picker currently validates a selected archive only. Neither component loads content into Minecraft, resolves or activates dependency graphs, enforces runtime capabilities, or executes package code.
 
-The version-range evaluator and its self-test were added after run #123; they are wired into the workflow but have not yet been CI-verified.\n\nThis status must be updated only when code and tests demonstrate the feature.
+The version-range evaluator passed the later Android CI build run #127 (commit `356cee0e23b99409b81c6e4d14d4a3d742a0ead8`); run #129 (commit `aec0aae43771ddf8f216caff8187b11195d455cd`) also completed successfully and uploaded a Debug APK. The dependency resolver and its self-tests were added after those runs and are not yet CI-verified.\n\nThis status must be updated only when code and tests demonstrate the feature.
