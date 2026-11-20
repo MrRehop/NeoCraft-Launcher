@@ -170,6 +170,31 @@ fun main() {
                 )
             }
         },
+        "candidate manifest count is bounded" to {
+            val candidates = (0..4096).map { index ->
+                manifest("mod", "1.0." + index)
+            }
+            expectCode("NCP_LIMIT_EXCEEDED") {
+                NcpDependencyResolver.resolve(
+                    listOf(NcpDependency("mod", ">=1.0.0")),
+                    candidates,
+                    "1.0.0",
+                )
+            }
+        },
+        "selected dependency graph size is bounded" to {
+            val dependencyIds = (0..255).map { index -> "pkg" + index.toString().padStart(3, '0') }
+            val candidates = listOf(
+                manifest("root", "1.0.0", dependencyIds.map { NcpDependency(it, "1.0.0") }),
+            ) + dependencyIds.map { manifest(it, "1.0.0") }
+            expectCode("NCP_LIMIT_EXCEEDED") {
+                NcpDependencyResolver.resolve(
+                    listOf(NcpDependency("root", "1.0.0")),
+                    candidates,
+                    "1.0.0",
+                )
+            }
+        },
         "empty request set is rejected" to {
             expectCode("NCP_RESOLUTION_INVALID") {
                 NcpDependencyResolver.resolve(emptyList(), emptyList(), "1.0.0")
