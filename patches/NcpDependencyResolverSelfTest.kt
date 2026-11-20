@@ -203,6 +203,21 @@ fun main() {
                 NcpDependencyResolver.resolve(requests, emptyList(), "1.0.0")
             }
         },
+        "dependency search state limit is enforced" to {
+            val candidates = (0..1999).flatMap { index ->
+                listOf(
+                    manifest("alpha", "1.0." + index),
+                    manifest("beta", "1.0." + index, listOf(NcpDependency("missing", ">=1.0.0"))),
+                )
+            }
+            expectCode("NCP_LIMIT_EXCEEDED") {
+                NcpDependencyResolver.resolve(
+                    listOf(NcpDependency("alpha", ">=1.0.0"), NcpDependency("beta", ">=1.0.0")),
+                    candidates,
+                    "1.0.0",
+                )
+            }
+        },
         "empty request set is rejected" to {
             expectCode("NCP_RESOLUTION_INVALID") {
                 NcpDependencyResolver.resolve(emptyList(), emptyList(), "1.0.0")
