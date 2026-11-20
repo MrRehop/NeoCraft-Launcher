@@ -10,15 +10,15 @@ The current NCP implementation and Android picker are being developed in [Pull R
 
 ## Latest verified PR-branch build
 
-- GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382) completed successfully on 2026-11-18 from commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`.
-- Artifact: `neocraft-debug-apk`, 909,728 bytes (workflow artifact ZIP).
-- Artifact ZIP SHA-256: `eced582bc6a4460dbc33fa3bb976cfbdb08eb3a50a1606addf08f136f8ad61c4`.
-- The artifact expires on 2027-02-16 at 15:02:11 UTC.
+- GitHub Actions [run #129](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490) completed successfully on 2026-11-19 from commit `aec0aae43771ddf8f216caff8187b11195d455cd`.
+- Artifact: `neocraft-debug-apk`, 913,765 bytes (workflow artifact ZIP).
+- Artifact ZIP SHA-256: `524d7d383a61d42204f0d7628ff2c7f766965786e9910611675c13daaea95849`.
+- The artifact expires on 2027-02-17 at 04:54:40 UTC.
 - CI used JDK 17 and Gradle 8.7. The `:app:assembleDebug` task completed successfully and the artifact was uploaded.
-- Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP ZIP reader 12/12; NCP package store 9/9.
+- Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP version range 12/12; NCP ZIP reader 12/12; NCP package store 9/9.
 - A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
 - The Android screen includes **Проверить NCP-пакет**. It opens the Android document picker, copies a selected archive to private cache with a 128 MiB input limit, validates it with the NCP reader, displays package metadata, and deletes the temporary copy. It does not install or activate the package.
-- Run #120 has not yet been tested on the physical Samsung device.
+- Run #129 has not yet been tested on the physical Samsung device.
 
 See [device testing](./docs/DEVICE_TESTING.md) for installation and manual checks.
 
@@ -29,7 +29,7 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 - Minecraft PE Patched 1.26.13.1 (`com.mojang.minecraftpe`, versionCode `972601301`) is recorded as a candidate from the device report only. Its exported APK and signer identity have not been independently re-hashed in the current build environment, and no runtime compatibility probe has passed.
 - NCP v1 manifest decoding, read-only ZIP validation, ZIP metadata checks, and a transactional data-only package store are implemented on the PR branch and pass the listed CI tests.
 - The Android NCP picker currently validates packages only. The package store is not yet connected to the screen.
-- NCP dependency resolution, NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
+- The NCP dependency resolver source and 14 self-tests are wired into the current PR workflow but have not yet been CI-verified; the resolver is not connected to the package store or UI. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
 - The legacy `.nmod` reader is separate from NCP and must not be treated as an NCP reader.
 - Offline/LAN multiplayer remains planned, not implemented.
 
