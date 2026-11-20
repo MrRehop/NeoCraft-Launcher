@@ -113,22 +113,23 @@ The repository contains launcher-side Minecraft discovery and diagnostics, a rev
 
 The PR #1 branch adds the NCP v1 manifest decoder, stable version-range evaluator, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation picker through the CI source overlay.
 
-GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382), commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`, completed successfully on 2026-11-18. It passed:
+GitHub Actions [run #129](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490), commit `aec0aae43771ddf8f216caff8187b11195d455cd`, completed successfully on 2026-11-19. It passed:
 - NeoMod core: 14/14;
 - legacy package reader: 14/14;
 - package manager: 11/11;
 - game-build identity: 9/9;
 - NCP manifest: 14/14;
+- NCP version range: 12/12;
 - NCP package reader: 12/12;
 - NCP package store: 9/9.
 
-The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The checked-in Hello World NCP sample passed the NCP reader self-test in run #123. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
+The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The run #129 artifact ZIP is 913,765 bytes with SHA-256 `524d7d383a61d42204f0d7628ff2c7f766965786e9910611675c13daaea95849`. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
 
 The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate. It is not reviewed or enabled: the original APK/signing identity has not been independently re-hashed in the current build environment, and no NeoMod compatibility probe has passed. `ReviewedGameBuilds` must remain empty for this candidate.
 
 The following remain unimplemented or unverified:
 - NCP publisher signature/trust model;
-- NCP dependency resolver;
+- integration of the NCP dependency resolver with the package store and profile UI;
 - NCP namespaced content registry;
 - NCP conflict engine;
 - NCP profile activation and rollback;
@@ -136,6 +137,4 @@ The following remain unimplemented or unverified:
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
 
-The NCP package store is data-only. The Android picker currently validates a selected archive only. Neither component loads content into Minecraft, resolves or activates dependency graphs, enforces runtime capabilities, or executes package code.
-
-The version-range evaluator passed the later Android CI build run #127 (commit `356cee0e23b99409b81c6e4d14d4a3d742a0ead8`); run #129 (commit `aec0aae43771ddf8f216caff8187b11195d455cd`) also completed successfully and uploaded a Debug APK. The dependency resolver and its self-tests were added after those runs and are not yet CI-verified.\n\nThis status must be updated only when code and tests demonstrate the feature.
+The NCP package store is data-only. The Android picker currently validates a selected archive only. The dependency resolver is a platform-neutral planning component whose source and 14 self-tests are wired into the current PR workflow, but no CI run has executed them yet. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code. The resolver is not yet connected to the Android UI or package-store listing.\n\nThis status must be updated only when code and tests demonstrate the feature.
