@@ -2,22 +2,23 @@
 
 ## Current PR-branch build
 
-The latest verified PR-branch Android debug build is GitHub Actions [run #123](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382), completed on 2026-11-18 from commit `08e0438bdb2f40338a947534c7dea8fb4f36ef71`.
+The latest verified PR-branch Android debug build is GitHub Actions [run #129](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490), completed on 2026-11-19 from commit `aec0aae43771ddf8f216caff8187b11195d455cd`.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44330927382/artifacts/14440075419), 909,728 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `eced582bc6a4460dbc33fa3bb976cfbdb08eb3a50a1606addf08f136f8ad61c4`. It expires on 2027-02-16 at 15:02:11 UTC.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490/artifacts/14499674681), 913,765 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `524d7d383a61d42204f0d7628ff2c7f766965786e9910611675c13daaea95849`. It expires on 2027-02-17 at 04:54:40 UTC.
 
-This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all seven self-test groups:
+This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all eight self-test groups:
 - NeoMod core: 14/14
 - legacy package reader: 14/14
 - package manager: 11/11
 - game-build identity: 9/9
 - NCP manifest: 14/14
+- NCP version range: 12/12
 - NCP package reader: 12/12
 - NCP package store: 9/9
 
 ## Install on the Samsung Android device
 
-1. Open the run #123 link above.
+1. Open the run #129 link above.
 2. In **Artifacts**, download `neocraft-debug-apk`.
 3. Extract `app-debug.apk` from the downloaded ZIP.
 4. Tap the APK and allow installation for the file manager/browser if Android requests it.
@@ -32,7 +33,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched. If Android refuses to
 3. If found, tap **Запустить Minecraft**.
 4. Confirm Minecraft opens normally.
 
-An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #120 has not yet been tested on the device. Launching the game does not prove NeoMod runtime compatibility.
+An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #129 has not yet been tested on the device. Launching the game does not prove NeoMod runtime compatibility.
 
 ## Test the NCP picker
 
