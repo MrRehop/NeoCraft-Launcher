@@ -195,6 +195,14 @@ fun main() {
                 )
             }
         },
+        "requested package count is bounded" to {
+            val requests = (0..256).map { index ->
+                NcpDependency("pkg" + index.toString().padStart(3, '0'), "1.0.0")
+            }
+            expectCode("NCP_LIMIT_EXCEEDED") {
+                NcpDependencyResolver.resolve(requests, emptyList(), "1.0.0")
+            }
+        },
         "empty request set is rejected" to {
             expectCode("NCP_RESOLUTION_INVALID") {
                 NcpDependencyResolver.resolve(emptyList(), emptyList(), "1.0.0")
