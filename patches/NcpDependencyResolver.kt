@@ -26,6 +26,9 @@ data class NcpDependencyResolution(
 
 object NcpDependencyResolver {
     private val packageIdRegex = Regex("^[a-z][a-z0-9_]{1,47}$")
+    private const val MAX_CANDIDATE_MANIFESTS = 4096
+    private const val MAX_SELECTED_PACKAGES = 256
+    private const val MAX_SEARCH_STATES = 10000
 
     private data class Candidate(
         val manifest: NcpManifest,
@@ -40,6 +43,9 @@ object NcpDependencyResolver {
     ): NcpDependencyResolution {
         if (requests.isEmpty()) {
             fail("NCP_RESOLUTION_INVALID", "at least one requested package is required")
+        }
+        if (installedCandidates.size > MAX_CANDIDATE_MANIFESTS) {
+            fail("NCP_LIMIT_EXCEEDED", "candidate manifest count exceeds " + MAX_CANDIDATE_MANIFESTS)
         }
         val apiVersion = NcpVersion.parse(neoModApiVersion)
         val parsedRequests = requests.map { request ->
@@ -76,6 +82,7 @@ object NcpDependencyResolver {
         var apiIncompatibleId: String? = null
         var cyclePath: List<String>? = null
         var conflictPair: Pair<String, String>? = null
+        var searchStates = 0
 
         fun compatibleCandidates(id: String, ranges: List<NcpVersionRange>): List<Candidate> {
             val all = candidatesById[id].orEmpty()
@@ -141,6 +148,13 @@ object NcpDependencyResolver {
             currentConstraints: Map<String, List<NcpVersionRange>>,
             selected: Map<String, NcpManifest>,
         ): Map<String, NcpManifest>? {
+            searchStates += 1
+            if (searchStates > MAX_SEARCH_STATES) {
+                fail("NCP_LIMIT_EXCEEDED", "dependency resolution exceeded " + MAX_SEARCH_STATES + " search states")
+            }
+            if (selected.size > MAX_SELECTED_PACKAGES) {
+                fail("NCP_LIMIT_EXCEEDED", "resolved package count exceeds " + MAX_SELECTED_PACKAGES)
+            }
             for ((id, manifest) in selected) {
                 val ranges = currentConstraints[id].orEmpty()
                 if (ranges.any { !it.contains(manifest.version) }) {
