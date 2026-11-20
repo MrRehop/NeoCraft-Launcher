@@ -29,7 +29,7 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 - Minecraft PE Patched 1.26.13.1 (`com.mojang.minecraftpe`, versionCode `972601301`) is recorded as a candidate from the device report only. Its exported APK and signer identity have not been independently re-hashed in the current build environment, and no runtime compatibility probe has passed.
 - NCP v1 manifest decoding, read-only ZIP validation, ZIP metadata checks, and a transactional data-only package store are implemented on the PR branch and pass the listed CI tests.
 - The Android NCP picker currently validates packages only. The package store is not yet connected to the screen.
-- The NCP dependency resolver source and 14 self-tests are wired into the current PR workflow but have not yet been CI-verified; the resolver is not connected to the package store or UI. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
+- The NCP dependency resolver source and 16 self-tests are wired into the current PR workflow but have not yet been CI-verified; it caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. The resolver is not connected to the package store or UI. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
 - The legacy `.nmod` reader is separate from NCP and must not be treated as an NCP reader.
 - Offline/LAN multiplayer remains planned, not implemented.
 
