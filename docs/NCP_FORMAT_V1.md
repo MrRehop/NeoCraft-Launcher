@@ -1,6 +1,6 @@
 # NeoCraft Package (NCP) format — version 1
 
-Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, stable version-range evaluator, read-only ZIP validator, ZIP metadata guard, and transactional local package store are implemented on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. Access to a normalized storage root is serialized across multiple store instances so concurrent installs cannot race to commit the same package version. These operations store data only; runtime activation and Minecraft content loading remain unimplemented.
+Status: IMPLEMENTATION IN REVIEW — NCP v1 manifest decoder, stable version-range evaluator, read-only ZIP validator, ZIP metadata guard, transactional local package store, and platform-neutral dependency resolver are present on PR #1. The package store has isolated ID/version directories, staged extraction, payload re-verification, atomic commit, tamper detection, listing, and explicit uninstall. The resolver selects compatible installed candidates with backtracking, validates mandatory constraints/API ranges/conflicts, rejects cycles, and returns dependency-first order; optional dependencies are reported but not auto-selected. The resolver and its self-tests are wired into CI but have not yet been verified by a run. These operations store and plan data only; runtime activation and Minecraft content loading remain unimplemented.
 
 ## 1. Container
 
@@ -87,7 +87,7 @@ A dependency record contains `id` and `versionRange`. Version ranges use a delib
 - inclusive lower bound: `>=1.2.3`
 - bounded: `>=1.2.3 <2.0.0` (lower bound inclusive, upper bound exclusive)
 
-The platform-neutral `NcpVersionRange` evaluator implements these forms and compares numeric components using arbitrary-precision integers. Unsupported forms, leading-zero components, and empty or reversed bounded ranges are rejected. This evaluator is not a dependency resolver: it does not choose package versions, build a dependency graph, or activate a profile. Only stable SemVer is accepted in v1; prerelease/build metadata are rejected.
+The platform-neutral `NcpVersionRange` evaluator implements these forms and compares numeric components using arbitrary-precision integers. Unsupported forms, leading-zero components, and empty or reversed bounded ranges are rejected. `NcpDependencyResolver` accepts requested package constraints and a caller-supplied set of installed manifests; it backtracks across candidate versions, checks NeoMod API compatibility and declared conflicts, rejects mandatory cycles, and returns a deterministic dependency-first plan. It does not download or install dependencies, manage profiles, activate packages, or load content. Optional dependencies are not selected automatically and are surfaced as notices. Only stable SemVer is accepted in v1; prerelease/build metadata are rejected.
 
 Mandatory dependency cycles are invalid. Optional dependencies do not make a package invalid when absent. Conflicts are explicit package IDs; declaring a conflict is not proof that all undeclared packages are compatible.
 
