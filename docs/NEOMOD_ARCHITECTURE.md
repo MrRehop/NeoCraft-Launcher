@@ -51,7 +51,7 @@ A shared library is resolved once to a single compatible version for a selected 
 
 Optional integrations must be declared separately from mandatory dependencies.
 
-The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. Optional dependencies are not auto-selected. Its 16 self-tests are wired into GitHub Actions but have not yet passed a run.
+The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. Optional dependencies are not auto-selected. Its 17 self-tests are wired into GitHub Actions but have not yet passed a run. It also caps requested packages at 256 and distinct dependency constraint IDs at 4,096.
 
 ## 5. Conflict model
 
