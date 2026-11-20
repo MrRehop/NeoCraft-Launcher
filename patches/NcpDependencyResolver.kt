@@ -26,7 +26,9 @@ data class NcpDependencyResolution(
 
 object NcpDependencyResolver {
     private val packageIdRegex = Regex("^[a-z][a-z0-9_]{1,47}$")
+    private const val MAX_REQUESTS = 256
     private const val MAX_CANDIDATE_MANIFESTS = 4096
+    private const val MAX_CONSTRAINT_IDS = 4096
     private const val MAX_SELECTED_PACKAGES = 256
     private const val MAX_SEARCH_STATES = 10000
 
@@ -43,6 +45,9 @@ object NcpDependencyResolver {
     ): NcpDependencyResolution {
         if (requests.isEmpty()) {
             fail("NCP_RESOLUTION_INVALID", "at least one requested package is required")
+        }
+        if (requests.size > MAX_REQUESTS) {
+            fail("NCP_LIMIT_EXCEEDED", "requested package count exceeds " + MAX_REQUESTS)
         }
         if (installedCandidates.size > MAX_CANDIDATE_MANIFESTS) {
             fail("NCP_LIMIT_EXCEEDED", "candidate manifest count exceeds " + MAX_CANDIDATE_MANIFESTS)
@@ -192,6 +197,9 @@ object NcpDependencyResolver {
                     val dependencyRange = NcpVersionRange.parse(dependency.versionRange)
                     nextConstraints[dependency.id] =
                         nextConstraints[dependency.id].orEmpty() + dependencyRange
+                    if (nextConstraints.size > MAX_CONSTRAINT_IDS) {
+                        fail("NCP_LIMIT_EXCEEDED", "dependency constraint IDs exceed " + MAX_CONSTRAINT_IDS)
+                    }
                 }
                 search(nextConstraints, nextSelected)?.let { return it }
             }
