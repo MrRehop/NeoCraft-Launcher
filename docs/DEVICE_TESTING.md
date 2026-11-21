@@ -19,7 +19,7 @@ This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI 
 
 ## Install on the Samsung Android device
 
-1. Open the run #129 link above.
+1. Open the run #156 link above.
 2. In **Artifacts**, download `neocraft-debug-apk`.
 3. Extract `app-debug.apk` from the downloaded ZIP.
 4. Tap the APK and allow installation for the file manager/browser if Android requests it.
