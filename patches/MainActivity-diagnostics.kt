@@ -1,6 +1,7 @@
 package org.neocraft.launcher
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -12,11 +13,13 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ScrollView
 import org.neocraft.neomod.android.AndroidGameDiscovery
 import org.neocraft.neomod.android.GameDiscoveryResult
 import org.neocraft.neomod.core.GameBuildMatch
 import org.neocraft.neomod.core.ReviewedGameBuilds
 import org.neocraft.neomod.core.NcpPackageReader
+import org.neocraft.neomod.core.NcpPackageStore
 import java.util.concurrent.Executors
 
 class MainActivity : Activity() {
@@ -25,12 +28,15 @@ class MainActivity : Activity() {
     private lateinit var launchButton: Button
     private lateinit var copyButton: Button
     private lateinit var ncpButton: Button
+    private lateinit var installNcpButton: Button
+    private lateinit var manageNcpButton: Button
     private var diagnosticReport: String? = null
     private val inspectionExecutor = Executors.newSingleThreadExecutor()
     private var inspectionToken = 0
 
     private companion object {
         const val REQUEST_NCP_PACKAGE = 4101
+        const val REQUEST_INSTALL_NCP_PACKAGE = 4102
         const val MAX_NCP_ARCHIVE_BYTES = 128L * 1024 * 1024
         const val MAX_DEX_BYTES = 64 * 1024 * 1024
         const val MAX_DEX_FILES = 8
@@ -75,7 +81,15 @@ class MainActivity : Activity() {
         }
         ncpButton = Button(this).apply {
             text = "Проверить NCP-пакет"
-            setOnClickListener { chooseNcpPackage() }
+            setOnClickListener { chooseNcpPackage(REQUEST_NCP_PACKAGE) }
+        }
+        installNcpButton = Button(this).apply {
+            text = "Установить NCP (только данные)"
+            setOnClickListener { chooseNcpPackage(REQUEST_INSTALL_NCP_PACKAGE) }
+        }
+        manageNcpButton = Button(this).apply {
+            text = "Управление NCP-пакетами"
+            setOnClickListener { showInstalledNcpPackages() }
         }
         val mods = Button(this).apply {
             text = "NeoMod — скоро"
@@ -87,8 +101,11 @@ class MainActivity : Activity() {
         layout.addView(launchButton)
         layout.addView(copyButton)
         layout.addView(ncpButton)
+        layout.addView(installNcpButton)
+        layout.addView(manageNcpButton)
         layout.addView(mods)
-        setContentView(layout)
+        val scroll = ScrollView(this).apply { addView(layout) }
+        setContentView(scroll)
     }
 
     private fun inspectGame() {
@@ -97,6 +114,8 @@ class MainActivity : Activity() {
         launchButton.isEnabled = false
         checkButton.isEnabled = false
         ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
         status.text = "Проверка Minecraft и анализ APK…"
         val request = ++inspectionToken
 
@@ -162,6 +181,8 @@ class MainActivity : Activity() {
                 launchButton.isEnabled = result is GameDiscoveryResult.Found
                 checkButton.isEnabled = true
                 ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
             }
         }
     }
@@ -427,7 +448,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun chooseNcpPackage() {
+    private fun chooseNcpPackage(requestCode: Int) {
         val picker = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
@@ -436,36 +457,44 @@ class MainActivity : Activity() {
                 arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"),
             )
         }
-        ncpButton.isEnabled = false
+        setNcpActionEnabled(requestCode, false)
         try {
-            startActivityForResult(picker, REQUEST_NCP_PACKAGE)
+            startActivityForResult(picker, requestCode)
         } catch (error: android.content.ActivityNotFoundException) {
-            ncpButton.isEnabled = true
+            setNcpActionEnabled(requestCode, true)
             Toast.makeText(this, "Не удалось открыть выбор файлов: ${error.message ?: "нет подробностей"}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun setNcpActionEnabled(requestCode: Int, enabled: Boolean) {
+        if (requestCode == REQUEST_INSTALL_NCP_PACKAGE) installNcpButton.isEnabled = enabled
+        else ncpButton.isEnabled = enabled
     }
 
     @Deprecated("Legacy activity-result API is retained for the minSdk-compatible launcher Activity")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQUEST_NCP_PACKAGE) return
+        if (requestCode != REQUEST_NCP_PACKAGE && requestCode != REQUEST_INSTALL_NCP_PACKAGE) return
         if (resultCode != RESULT_OK) {
-            ncpButton.isEnabled = true
+            setNcpActionEnabled(requestCode, true)
             return
         }
         val uri = data?.data
         if (uri == null) {
-            ncpButton.isEnabled = true
+            setNcpActionEnabled(requestCode, true)
             Toast.makeText(this, "Файл не выбран", Toast.LENGTH_SHORT).show()
             return
         }
-        validateNcpPackage(uri)
+        if (requestCode == REQUEST_INSTALL_NCP_PACKAGE) installNcpPackage(uri)
+        else validateNcpPackage(uri)
     }
 
     private fun validateNcpPackage(uri: Uri) {
         val request = ++inspectionToken
         checkButton.isEnabled = false
         ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
         status.text = "Проверка NCP-пакета…"
 
         inspectionExecutor.execute {
@@ -494,6 +523,119 @@ class MainActivity : Activity() {
                 status.text = display
                 checkButton.isEnabled = true
                 ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+            }
+        }
+    }
+
+    private fun installNcpPackage(uri: Uri) {
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
+        status.text = "Установка NCP в приватное хранилище (только данные)…"
+
+        inspectionExecutor.execute {
+            var stagedFile: java.io.File? = null
+            val display = try {
+                val staged = copyNcpToCache(uri)
+                stagedFile = staged
+                val installed = NcpPackageStore(java.io.File(filesDir, "neomod/ncp-store")).install(staged)
+                buildString {
+                    appendLine("NCP-пакет сохранён")
+                    appendLine("Название: ${installed.name}")
+                    appendLine("ID: ${installed.id}")
+                    appendLine("Версия: ${installed.version}")
+                    appendLine("Проверено файлов: ${installed.files.size}")
+                    appendLine("Хранилище: приватные данные NeoCraft")
+                    appendLine("Активация в Minecraft не выполнялась")
+                }
+            } catch (error: Exception) {
+                "NCP-пакет не установлен\nПричина: ${error.message ?: error.javaClass.simpleName}"
+            } finally {
+                stagedFile?.delete()
+            }
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                status.text = display
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+            }
+        }
+    }
+
+    private fun showInstalledNcpPackages() {
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
+        status.text = "Проверка установленного NCP-хранилища…"
+        inspectionExecutor.execute {
+            val result = runCatching {
+                NcpPackageStore(java.io.File(filesDir, "neomod/ncp-store")).listInstalled()
+            }
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+                result.onSuccess { packages ->
+                    if (packages.isEmpty()) {
+                        status.text = "В приватном хранилище NeoCraft нет NCP-пакетов"
+                    } else {
+                        val labels = packages.map { "${it.name} (${it.id}) v${it.version}" }.toTypedArray()
+                        AlertDialog.Builder(this)
+                            .setTitle("NCP-пакеты (данные, не активированы)")
+                            .setItems(labels) { _, index -> confirmNcpUninstall(packages[index]) }
+                            .setNegativeButton("Закрыть", null)
+                            .show()
+                        status.text = "Найдено NCP-пакетов: ${packages.size}. Они хранятся как данные и не загружены в Minecraft."
+                    }
+                }.onFailure { error ->
+                    status.text = "Ошибка проверки NCP-хранилища: ${error.message ?: error.javaClass.simpleName}"
+                }
+            }
+        }
+    }
+
+    private fun confirmNcpUninstall(installed: NcpPackageStore.InstalledPackage) {
+        AlertDialog.Builder(this)
+            .setTitle("Удалить NCP-пакет?")
+            .setMessage("${installed.name} (${installed.id}) v${installed.version}\nБудут удалены только данные этой версии из NeoCraft.")
+            .setNegativeButton("Отмена", null)
+            .setPositiveButton("Удалить") { _, _ -> uninstallNcpPackage(installed) }
+            .show()
+    }
+
+    private fun uninstallNcpPackage(installed: NcpPackageStore.InstalledPackage) {
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
+        status.text = "Удаление NCP-пакета из приватного хранилища…"
+        inspectionExecutor.execute {
+            val result = runCatching {
+                NcpPackageStore(java.io.File(filesDir, "neomod/ncp-store")).uninstall(installed.id, installed.version)
+            }
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+                result.onSuccess {
+                    status.text = "Удалён ${installed.id} v${installed.version}. Minecraft не изменялась."
+                }.onFailure { error ->
+                    status.text = "Не удалось удалить NCP: ${error.message ?: error.javaClass.simpleName}"
+                }
             }
         }
     }
