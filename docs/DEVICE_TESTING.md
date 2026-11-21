@@ -2,9 +2,9 @@
 
 ## Current PR-branch build
 
-The latest verified PR-branch Android debug build is GitHub Actions [run #156](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723), completed on 2026-11-21 from commit `d7cd370192cbd0be91d652e1676d56f0146dca2a`.
+The latest verified PR-branch Android debug build is GitHub Actions [run #157](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793), completed on 2026-11-21 from commit `b40401ee5076752dd138fa2beda84b0a1636e2a9`.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723/artifacts/14692286230), 925,933 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `3258e7314369ca79478c5b7b7da38d2f3592e7acabe0e58690edad4bfc17a561`. It expires on 2027-02-19 at 04:34:46 UTC.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723/artifacts/14692556327), 925,935 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `9d14a50fdf2e0a32129b762f08e5b288ef9dd97ab7d2a1602be1cc8dd293262c`. It expires on 2027-02-19 at 04:35:36 UTC.
 
 This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all nine self-test groups:
 - NeoMod core: 14/14
@@ -34,7 +34,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched. If Android refuses to
 3. If found, tap **Запустить Minecraft**.
 4. Confirm Minecraft opens normally.
 
-An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #156 has not yet been tested on the device. The current branch head `b40401ee` contains only a smaller resolver search-state test fixture; CI run #157 is pending. Launching the game does not prove NeoMod runtime compatibility.
+An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #157 has not yet been tested on the device. It includes the smaller resolver search-state test fixture and successfully builds the APK. Launching the game does not prove NeoMod runtime compatibility.
 
 ## Test the NCP picker
 
