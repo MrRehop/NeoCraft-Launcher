@@ -204,7 +204,9 @@ fun main() {
             }
         },
         "dependency search state limit is enforced" to {
-            val candidates = (0..1999).flatMap { index ->
+            // 100 versions for each of two requested packages create 10,000
+            // failed candidate combinations, exceeding the 10,000-state cap.
+            val candidates = (0..99).flatMap { index ->
                 listOf(
                     manifest("alpha", "1.0." + index),
                     manifest("beta", "1.0." + index, listOf(NcpDependency("missing", ">=1.0.0"))),
