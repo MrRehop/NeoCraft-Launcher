@@ -27,9 +27,12 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 - The reviewed Minecraft build allow-list is intentionally empty. Discovering or launching a game does not establish NeoMod compatibility.
 - Minecraft PE Patched 1.26.13.1 (`com.mojang.minecraftpe`, versionCode `972601301`) is recorded as a candidate from the device report only. Its exported APK and signer identity have not been independently re-hashed in the current build environment, and no runtime compatibility probe has passed.
 - NCP v1 manifest decoding, read-only ZIP validation, ZIP metadata checks, and a transactional data-only package store are implemented on the PR branch and pass the listed CI tests.
-- The Android NCP picker currently validates packages only. The package store is not yet connected to the screen.
+- The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. Stored packages are not activated or loaded into Minecraft.
 - The NCP dependency resolver's 18 self-tests passed in run #156. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; run #156 also confirms the package-store tests pass. CI run #157 on commit `b40401ee` passed. It verifies the reduced search-state-limit test fixture and builds the debug APK. The resolver caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. It is not connected to the package store or UI. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
 - The legacy `.nmod` reader is separate from NCP and must not be treated as an NCP reader.
 - Offline/LAN multiplayer remains planned, not implemented.
 
 No in-game mod injection, native patching, or Minecraft modification is claimed.
+
+
+- The NCP Package Store has now been connected to the Android UI for explicit data-only installation and management in a new commit. The new UI integration is pending CI and physical-device verification; the latest verified APK listed above predates this integration.
