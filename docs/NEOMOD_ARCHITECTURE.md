@@ -113,17 +113,18 @@ The repository contains launcher-side Minecraft discovery and diagnostics, a rev
 
 The PR #1 branch adds the NCP v1 manifest decoder, stable version-range evaluator, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation picker through the CI source overlay.
 
-GitHub Actions [run #129](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490), commit `aec0aae43771ddf8f216caff8187b11195d455cd`, completed successfully on 2026-11-19. It passed:
-- NeoMod core: 14/14;
-- legacy package reader: 14/14;
-- package manager: 11/11;
-- game-build identity: 9/9;
-- NCP manifest: 14/14;
-- NCP version range: 12/12;
-- NCP package reader: 12/12;
-- NCP package store: 9/9.
+GitHub Actions [run #156](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723), commit `d7cd370192cbd0be91d652e1676d56f0146dca2a`, completed successfully on 2026-11-21. It passed:
+- NeoMod core: 14/14
+- legacy package reader: 14/14
+- package manager: 11/11
+- game-build identity: 9/9
+- NCP manifest: 14/14
+- NCP version range: 12/12
+- NCP package reader: 12/12
+- NCP package store: 10/10
+- NCP dependency resolver: 18/18
 
-The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The run #129 artifact ZIP is 913,765 bytes with SHA-256 `524d7d383a61d42204f0d7628ff2c7f766965786e9910611675c13daaea95849`. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
+The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The run #156 artifact ZIP is 925,933 bytes with SHA-256 `3258e7314369ca79478c5b7b7da38d2f3592e7acabe0e58690edad4bfc17a561`. It expires on 2027-02-19 at 04:34:46 UTC. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
 
 The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate. It is not reviewed or enabled: the original APK/signing identity has not been independently re-hashed in the current build environment, and no NeoMod compatibility probe has passed. `ReviewedGameBuilds` must remain empty for this candidate.
 
@@ -137,4 +138,4 @@ The following remain unimplemented or unverified:
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
 
-The NCP package store is data-only. The Android picker currently validates a selected archive only. The dependency resolver is a platform-neutral planning component whose source and 18 self-tests are wired into the current PR workflow, but the current resolver tests have not yet been reached by a successful CI run. Run #152 failed in the package-store concurrent-install test because the test fixture exceeded the archive compression-ratio limit; commit `783707a6` replaces the fixture with seeded pseudo-random data, and a new CI result is pending. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code. The resolver is not yet connected to the Android UI or package-store listing.\n\nThis status must be updated only when code and tests demonstrate the feature.
+The NCP package store is data-only. The Android picker currently validates a selected archive only. The dependency resolver is a platform-neutral planning component whose 18 self-tests passed in run #156. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; the package-store suite passed 10/10 in run #156. Current branch head `b40401ee` changes only the search-state-limit test fixture to reduce its candidate count while still exercising the 10,000-state limit; CI run #157 is pending. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code. The resolver is not yet connected to the Android UI or package-store listing.\n\nThis status must be updated only when code and tests demonstrate the feature.

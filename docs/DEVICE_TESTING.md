@@ -2,11 +2,11 @@
 
 ## Current PR-branch build
 
-The latest verified PR-branch Android debug build is GitHub Actions [run #129](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490), completed on 2026-11-19 from commit `aec0aae43771ddf8f216caff8187b11195d455cd`.
+The latest verified PR-branch Android debug build is GitHub Actions [run #156](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723), completed on 2026-11-21 from commit `d7cd370192cbd0be91d652e1676d56f0146dca2a`.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44461513490/artifacts/14499674681), 913,765 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `524d7d383a61d42204f0d7628ff2c7f766965786e9910611675c13daaea95849`. It expires on 2027-02-17 at 04:54:40 UTC.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723/artifacts/14692286230), 925,933 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `3258e7314369ca79478c5b7b7da38d2f3592e7acabe0e58690edad4bfc17a561`. It expires on 2027-02-19 at 04:34:46 UTC.
 
-This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all eight self-test groups:
+This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all nine self-test groups:
 - NeoMod core: 14/14
 - legacy package reader: 14/14
 - package manager: 11/11
@@ -14,7 +14,8 @@ This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI 
 - NCP manifest: 14/14
 - NCP version range: 12/12
 - NCP package reader: 12/12
-- NCP package store: 9/9
+- NCP package store: 10/10
+- NCP dependency resolver: 18/18
 
 ## Install on the Samsung Android device
 
@@ -33,7 +34,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched. If Android refuses to
 3. If found, tap **Запустить Minecraft**.
 4. Confirm Minecraft opens normally.
 
-An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #129 has not yet been tested on the device. Launching the game does not prove NeoMod runtime compatibility.
+An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #156 has not yet been tested on the device. The current branch head `b40401ee` contains only a smaller resolver search-state test fixture; CI run #157 is pending. Launching the game does not prove NeoMod runtime compatibility.
 
 ## Test the NCP picker
 
