@@ -3,6 +3,7 @@ package org.neocraft.neomod.core
 import java.io.File
 import java.nio.file.Files
 import java.security.MessageDigest
+import java.util.Random
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -84,7 +85,8 @@ fun main() {
         },
         "concurrent duplicate installs from separate store instances are serialized" to {
             val root = Files.createTempDirectory("ncp-store-concurrent-").toFile()
-            val archive = ncpStoreArchive(payload = ByteArray(256 * 1024) { (it % 251).toByte() })
+            val concurrentPayload = ByteArray(256 * 1024).also { Random(0x4E4350L).nextBytes(it) }
+            val archive = ncpStoreArchive(payload = concurrentPayload)
             val workerCount = 8
             val ready = CountDownLatch(workerCount)
             val start = CountDownLatch(1)
@@ -122,7 +124,7 @@ fun main() {
                 val installed = NcpPackageStore(root).listInstalled()
                 check(installed.size == 1)
                 check(installed.single().directory.resolve("content/data.txt").readBytes()
-                    .contentEquals(ByteArray(256 * 1024) { (it % 251).toByte() }))
+                    .contentEquals(concurrentPayload))
             } finally {
                 archive.delete()
                 root.deleteRecursively()
