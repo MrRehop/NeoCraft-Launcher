@@ -17,7 +17,7 @@ The current NCP implementation and Android picker are being developed in [Pull R
 - Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP version range 12/12; NCP ZIP reader 12/12; NCP package store 10/10; NCP dependency resolver 18/18.
 - A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
 - The Android screen includes **Проверить NCP-пакет**. It opens the Android document picker, copies a selected archive to private cache with a 128 MiB input limit, validates it with the NCP reader, displays package metadata, and deletes the temporary copy. It does not install or activate the package.
-- Run #156 has not yet been tested on the physical Samsung device.
+- Run #157 has not yet been tested on the physical Samsung device.
 
 See [device testing](./docs/DEVICE_TESTING.md) for installation and manual checks.
 

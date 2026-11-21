@@ -4,7 +4,7 @@
 
 The latest verified PR-branch Android debug build is GitHub Actions [run #157](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793), completed on 2026-11-21 from commit `b40401ee5076752dd138fa2beda84b0a1636e2a9`.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866793723/artifacts/14692556327), 925,935 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `9d14a50fdf2e0a32129b762f08e5b288ef9dd97ab7d2a1602be1cc8dd293262c`. It expires on 2027-02-19 at 04:35:36 UTC.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793/artifacts/14692556327), 925,935 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `9d14a50fdf2e0a32129b762f08e5b288ef9dd97ab7d2a1602be1cc8dd293262c`. It expires on 2027-02-19 at 04:35:36 UTC.
 
 This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all nine self-test groups:
 - NeoMod core: 14/14
