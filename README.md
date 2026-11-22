@@ -16,7 +16,7 @@ The current NCP implementation and Android picker are being developed in [Pull R
 - CI used JDK 17 and Gradle 8.7. The `:app:assembleDebug` task completed successfully and the artifact was uploaded.
 - Test results: NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP version range 12/12; NCP ZIP reader 12/12; NCP package store 10/10; NCP dependency resolver 18/18.
 - A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
-- The Android screen includes **Проверить NCP-пакет**. It opens the Android document picker, copies a selected archive to private cache with a 128 MiB input limit, validates it with the NCP reader, displays package metadata, and deletes the temporary copy. It does not install or activate the package.
+- The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. It stages selected archives in private cache with a 128 MiB input limit. Stored packages are not activated or loaded into Minecraft. This UI integration was committed after run #157 and awaits CI plus physical-device verification.
 - Run #157 has not yet been tested on the physical Samsung device.
 
 See [device testing](./docs/DEVICE_TESTING.md) for installation and manual checks.
@@ -28,11 +28,11 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 - Minecraft PE Patched 1.26.13.1 (`com.mojang.minecraftpe`, versionCode `972601301`) is recorded as a candidate from the device report only. Its exported APK and signer identity have not been independently re-hashed in the current build environment, and no runtime compatibility probe has passed.
 - NCP v1 manifest decoding, read-only ZIP validation, ZIP metadata checks, and a transactional data-only package store are implemented on the PR branch and pass the listed CI tests.
 - The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. Stored packages are not activated or loaded into Minecraft.
-- The NCP dependency resolver's 18 self-tests passed in run #156. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; run #156 also confirms the package-store tests pass. CI run #157 on commit `b40401ee` passed. It verifies the reduced search-state-limit test fixture and builds the debug APK. The resolver caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. It is not connected to the package store or UI. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
+- The NCP dependency resolver's 18 self-tests passed in run #157. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; the package-store suite passed 10/10 in run #156 and again in #157. CI run #157 on commit `b40401ee` passed and built the debug APK. The resolver caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. A new `NcpInstalledPackagePlanResolver` maps resolved manifests back to verified installed-store records; its five tests are wired into CI but not yet verified. The bridge is not surfaced in profile UI. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
 - The legacy `.nmod` reader is separate from NCP and must not be treated as an NCP reader.
 - Offline/LAN multiplayer remains planned, not implemented.
 
 No in-game mod injection, native patching, or Minecraft modification is claimed.
 
 
-- The NCP Package Store has now been connected to the Android UI for explicit data-only installation and management in a new commit. The new UI integration is pending CI and physical-device verification; the latest verified APK listed above predates this integration.
+- The latest verified APK listed above predates the Android data-only package-store UI integration and the installed-package plan bridge.
