@@ -111,7 +111,7 @@ Breaking changes require a new major API version and an explicit migration path.
 
 The repository contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, and a legacy `.nmod` package reader/manager from the Stage 9 source archive. The legacy `.nmod` reader is not an NCP reader and must not be treated as accepting `.ncp` files.
 
-The PR #1 branch adds the NCP v1 manifest decoder, stable version-range evaluator, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation picker through the CI source overlay.
+The PR #1 branch adds the NCP v1 manifest decoder, stable version-range evaluator, ZIP metadata guard, read-only package validator, transactional data-only package store, and Android NCP validation/install/manage UI through the CI source overlay. The installed-package plan bridge is also present but awaits CI verification.
 
 GitHub Actions [run #157](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793), commit `b40401ee5076752dd138fa2beda84b0a1636e2a9`, completed successfully on 2026-11-21. It passed:
 - NeoMod core: 14/14
@@ -124,13 +124,13 @@ GitHub Actions [run #157](https://github.com/MrRehop/NeoCraft-Launcher/actions/r
 - NCP package store: 10/10
 - NCP dependency resolver: 18/18
 
-The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The run #157 artifact ZIP is 925,935 bytes with SHA-256 `9d14a50fdf2e0a32129b762f08e5b288ef9dd97ab7d2a1602be1cc8dd293262c`. It expires on 2027-02-19 at 04:35:36 UTC. The Android picker is compile-verified but has not yet been manually exercised on the Samsung device.
+The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk`. The run #157 artifact ZIP is 925,935 bytes with SHA-256 `9d14a50fdf2e0a32129b762f08e5b288ef9dd97ab7d2a1602be1cc8dd293262c`. It expires on 2027-02-19 at 04:35:36 UTC. The validation picker is compile-verified in run #157 but has not yet been manually exercised on the Samsung device. The newer data-only install/manage UI and installed-package plan bridge await CI verification and device testing.
 
 The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate. It is not reviewed or enabled: the original APK/signing identity has not been independently re-hashed in the current build environment, and no NeoMod compatibility probe has passed. `ReviewedGameBuilds` must remain empty for this candidate.
 
 The following remain unimplemented or unverified:
 - NCP publisher signature/trust model;
-- integration of the NCP dependency resolver with the package store and profile UI;
+- profile UI integration for the installed-package plan bridge;
 - NCP namespaced content registry;
 - NCP conflict engine;
 - NCP profile activation and rollback;
@@ -138,4 +138,6 @@ The following remain unimplemented or unverified:
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
 
-The NCP package store is data-only. The Android UI now has validation, data-only install, list, and uninstall actions, but the integration is pending CI and physical-device verification; run #157 predates these UI changes. The dependency resolver's 18 self-tests passed in run #157. The new installed-package plan bridge maps resolver output back to verified store records; its tests are wired into the workflow but not yet CI-verified. It is not yet surfaced in Android profile management. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; the package-store suite passed 10/10 in run #156. CI run #157 on commit `b40401ee` passed. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code.\n\nThis status must be updated only when code and tests demonstrate the feature.
+The NCP package store is data-only. The Android UI now has validation, data-only install, list, and uninstall actions, but the integration is pending CI and physical-device verification; run #157 predates these UI changes. The dependency resolver's 18 self-tests passed in run #157. The new installed-package plan bridge maps resolver output back to verified store records; its tests are wired into the workflow but not yet CI-verified. It is not yet surfaced in Android profile management. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; the package-store suite passed 10/10 in run #156. CI run #157 on commit `b40401ee` passed. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code.
+
+This status must be updated only when code and tests demonstrate the feature.
