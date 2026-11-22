@@ -107,7 +107,12 @@ The core must expose capability negotiation rather than relying only on a single
 
 Breaking changes require a new major API version and an explicit migration path. Deprecated APIs must have a documented support window. Runtime adapters may be updated for a new Minecraft build without forcing a redesign of the package format or dependency resolver.
 
-## 10. Current implementation status
+
+## 6. Profile snapshot model
+
+The PR branch now adds a platform-neutral `NcpProfileSnapshot` metadata model and validator. A snapshot records a stable profile ID, display name, exact Minecraft package/versionCode/APK SHA-256 identity, NeoMod API version, requested package ranges, and the dependency-first resolved package ID/version/order list. Validation compares the resolved list against a previously verified `NcpInstalledPackagePlan` and rejects incomplete game fingerprints, invalid identifiers, duplicate requests, and mismatched package order or versions. This is metadata-only: it does not persist profiles, activate them, or modify Minecraft. Eight self-tests are wired into CI but have not yet been CI-verified.
+
+## 11. Current implementation status
 
 The repository contains launcher-side Minecraft discovery and diagnostics, a reviewed-build allow-list that remains empty, and a legacy `.nmod` package reader/manager from the Stage 9 source archive. The legacy `.nmod` reader is not an NCP reader and must not be treated as accepting `.ncp` files.
 
