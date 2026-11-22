@@ -25,7 +25,7 @@ The PR #1 branch supplies:
 - a read-only ZIP validator and ZIP metadata guard;
 - exact payload inventory, uncompressed-size, and SHA-256 verification;
 - a transactional data-only package store with staging, re-verification, atomic commit, listing, tamper detection, and uninstall;
-- an Android document picker that validates a selected `.ncp` archive without installing it.
+- Android NCP UI actions for read-only validation, explicit data-only installation, installed-package listing, and uninstall. This integration is newer than CI run #157 and still awaits CI and physical-device verification.
 
 These changes are delivered through the CI source overlay on `feature/ncp-package-reader`; they are not yet merged into `main`.
 
@@ -51,7 +51,7 @@ A shared library is resolved once to a single compatible version for a selected 
 
 Optional integrations must be declared separately from mandatory dependencies.
 
-The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. Optional dependencies are not auto-selected. Its 18 self-tests are wired into GitHub Actions but have not yet passed a run. It also caps requested packages at 256 and distinct dependency constraint IDs at 4,096.
+The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. Optional dependencies are not auto-selected. Its 18 self-tests are wired into GitHub Actions but have not yet passed a run. It also caps requested packages at 256 and distinct dependency constraint IDs at 4,096. The new `NcpInstalledPackagePlanResolver` bridge accepts a verified store snapshot, runs the resolver, and maps the dependency-first result back to installed package records; it has five self-tests wired into CI, but this addition is not yet verified by a CI run.
 
 ## 5. Conflict model
 
@@ -138,4 +138,4 @@ The following remain unimplemented or unverified:
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
 
-The NCP package store is data-only. The Android picker currently validates a selected archive only. The dependency resolver is a platform-neutral planning component whose 18 self-tests passed in run #157. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; the package-store suite passed 10/10 in run #156. CI run #157 on commit `b40401ee` passed. It verifies the reduced search-state-limit test fixture and builds the debug APK. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code. The resolver is not yet connected to the Android UI or package-store listing.\n\nThis status must be updated only when code and tests demonstrate the feature.
+The NCP package store is data-only. The Android UI now has validation, data-only install, list, and uninstall actions, but the integration is pending CI and physical-device verification; run #157 predates these UI changes. The dependency resolver's 18 self-tests passed in run #157. The new installed-package plan bridge maps resolver output back to verified store records; its tests are wired into the workflow but not yet CI-verified. It is not yet surfaced in Android profile management. The earlier run #152 package-store fixture failure was corrected in commit `783707a6`; the package-store suite passed 10/10 in run #156. CI run #157 on commit `b40401ee` passed. Neither the store nor resolver activates content, enforces runtime capabilities, or executes package code.\n\nThis status must be updated only when code and tests demonstrate the feature.
