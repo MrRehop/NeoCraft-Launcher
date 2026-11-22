@@ -52,6 +52,28 @@ fun main() {
             check(plan.selectedPackages.map { it.id } == listOf("library", "root"))
             check(plan.selectedPackages.map { it.directory.name } == listOf("1.2.0", "1.0.0"))
         },
+        "selected installed version maps to its exact store record" to {
+            val root = planManifest(
+                "root",
+                "1.0.0",
+                listOf(NcpDependency("library", ">=1.0.0 <2.0.0")),
+            )
+            val olderCompatible = planManifest("library", "1.4.0")
+            val newerIncompatible = planManifest("library", "2.0.0")
+            val plan = NcpInstalledPackagePlanResolver.resolve(
+                listOf(
+                    installed(root),
+                    installed(newerIncompatible),
+                    installed(olderCompatible),
+                ),
+                listOf(NcpDependency("root", "1.0.0")),
+                "1.0.0",
+            )
+            val selectedLibrary = plan.selectedPackages.single { it.id == "library" }
+            check(selectedLibrary.version == "1.4.0")
+            check(selectedLibrary.manifest == olderCompatible)
+            check(selectedLibrary.directory.path.endsWith("library/1.4.0"))
+        },
         "missing requested package remains unsatisfied" to {
             expectPlanError("NCP_DEPENDENCY_UNSATISFIED") {
                 NcpInstalledPackagePlanResolver.resolve(
