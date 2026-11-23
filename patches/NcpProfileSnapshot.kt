@@ -31,10 +31,8 @@ object NcpProfileSnapshotValidator {
     private val packageIdRegex = Regex("^[a-z][a-z0-9_]{1,47}$")
     private val sha256Regex = Regex("^[a-f0-9]{64}$")
 
-    fun validate(
-        snapshot: NcpProfileSnapshot,
-        plan: NcpInstalledPackagePlan,
-    ): NcpProfileSnapshot {
+    /** Validates fields without requiring a package-store resolution plan. */
+    fun validateStructure(snapshot: NcpProfileSnapshot): NcpProfileSnapshot {
         if (!profileIdRegex.matches(snapshot.profileId)) {
             fail("NCP_PROFILE_INVALID", "profileId must be a stable lowercase identifier")
         }
@@ -46,27 +44,43 @@ object NcpProfileSnapshotValidator {
             !sha256Regex.matches(build.apkSha256)) {
             fail("NCP_PROFILE_INVALID", "game build identity is incomplete or invalid")
         }
+        NcpVersion.parse(snapshot.neoModApiVersion)
         if (snapshot.requestedPackages.isEmpty() || snapshot.requestedPackages.size > 256) {
             fail("NCP_PROFILE_INVALID", "requested package count must be 1..256")
         }
         if (snapshot.requestedPackages.any { !packageIdRegex.matches(it.id) }) {
             fail("NCP_PROFILE_INVALID", "requested package ID is invalid")
         }
+        snapshot.requestedPackages.forEach { NcpVersionRange.parse(it.versionRange) }
         if (snapshot.requestedPackages.map { it.id }.distinct().size != snapshot.requestedPackages.size) {
             fail("NCP_PROFILE_INVALID", "requested package IDs must be unique")
         }
-
-        val expected = plan.selectedPackages.mapIndexed { index, installed ->
-            NcpProfilePackage(installed.id, installed.version, index)
+        if (snapshot.resolvedPackages.isEmpty() || snapshot.resolvedPackages.size > 256) {
+            fail("NCP_PROFILE_INVALID", "resolved package count must be 1..256")
         }
-        if (snapshot.resolvedPackages != expected) {
-            fail("NCP_PROFILE_PLAN_MISMATCH", "profile resolved package list does not match the validated plan")
+        if (snapshot.resolvedPackages.any { !packageIdRegex.matches(it.id) }) {
+            fail("NCP_PROFILE_INVALID", "resolved package ID is invalid")
         }
+        snapshot.resolvedPackages.forEach { NcpVersion.parse(it.version) }
         if (snapshot.resolvedPackages.map { it.id }.distinct().size != snapshot.resolvedPackages.size) {
             fail("NCP_PROFILE_INVALID", "resolved package IDs must be unique")
         }
         if (snapshot.resolvedPackages.map { it.order } != snapshot.resolvedPackages.indices.toList()) {
             fail("NCP_PROFILE_INVALID", "resolved package order must be contiguous and dependency-first")
+        }
+        return snapshot
+    }
+
+    fun validate(
+        snapshot: NcpProfileSnapshot,
+        plan: NcpInstalledPackagePlan,
+    ): NcpProfileSnapshot {
+        validateStructure(snapshot)
+        val expected = plan.selectedPackages.mapIndexed { index, installed ->
+            NcpProfilePackage(installed.id, installed.version, index)
+        }
+        if (snapshot.resolvedPackages != expected) {
+            fail("NCP_PROFILE_PLAN_MISMATCH", "profile resolved package list does not match the validated plan")
         }
         return snapshot
     }
