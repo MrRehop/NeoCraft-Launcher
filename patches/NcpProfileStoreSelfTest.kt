@@ -120,7 +120,7 @@ fun main() {
                 Files.writeString(outside, "outside")
                 val store = NcpProfileStore(root)
                 val link = root.resolve("profiles/survival.ncp-profile")
-                Files.createSymbolicLink(link, outside)
+                Files.createSymbolicLink(link.toPath(), outside)
                 expectStoreError("NCP_PROFILE_STORE_INVALID") { store.load("survival", storePlan()) }
                 expectStoreError("NCP_PROFILE_STORE_INVALID") { store.listProfiles() }
                 check(Files.readString(outside) == "outside")
