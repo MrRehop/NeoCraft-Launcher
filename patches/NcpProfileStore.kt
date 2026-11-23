@@ -11,7 +11,6 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.security.MessageDigest
 import java.util.Base64
 import java.util.UUID
 
@@ -149,13 +148,18 @@ class NcpProfileStore(storageDirectory: File) {
     }
 
     private fun readLimited(path: Path): String {
-        val size = Files.size(path)
-        if (size > MAX_PROFILE_BYTES) {
-            fail("NCP_PROFILE_STORE_LIMIT", "profile file exceeds size limit")
-        }
-        val bytes = Files.readAllBytes(path)
-        if (bytes.size > MAX_PROFILE_BYTES) {
-            fail("NCP_PROFILE_STORE_LIMIT", "profile file exceeds size limit")
+        val bytes = try {
+            val size = Files.size(path)
+            if (size > MAX_PROFILE_BYTES) {
+                fail("NCP_PROFILE_STORE_LIMIT", "profile file exceeds size limit")
+            }
+            Files.readAllBytes(path).also {
+                if (it.size > MAX_PROFILE_BYTES) {
+                    fail("NCP_PROFILE_STORE_LIMIT", "profile file exceeds size limit")
+                }
+            }
+        } catch (error: IOException) {
+            throw NcpValidationException("NCP_PROFILE_STORE_IO", "profile read failed: " + (error.message ?: "I/O error"))
         }
         return try {
             StandardCharsets.UTF_8.newDecoder()
