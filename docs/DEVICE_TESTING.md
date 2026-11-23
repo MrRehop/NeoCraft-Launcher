@@ -1,5 +1,11 @@
 # Android device testing
 
+## Branch-head verification (checked 2026-11-23)
+
+The current PR head is `ddfc2ffaef00b5aca2349ba2d4ed7e1b2b3a4ef6` on `feature/ncp-package-reader`. PR #1 remains open and in Draft state. The workflow-run query for this head returned no PR-triggered runs; CI for this exact commit is therefore **not verified**.
+
+Run #157 below is still the latest build whose result is confirmed by this project record, but it predates the newer package-store UI and profile snapshot/store sources. Its APK is a baseline only, not a current-head artifact. Do not use it to claim those newer features are build-verified.
+
 ## Current PR-branch build
 
 The latest verified PR-branch Android debug build is GitHub Actions [run #157](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793), completed on 2026-11-21 from commit `b40401ee5076752dd138fa2beda84b0a1636e2a9`.
@@ -57,6 +63,16 @@ Download the safe [Hello World sample NCP package](https://raw.githubusercontent
 5. Attempt to install the same package version again while it is already stored; the store should reject the duplicate without damaging the existing copy.
 
 The picker stages the selected document in NeoCraft's private cache with a 128 MiB streaming cap. Validation and store operations run in the background. Installation extracts verified data into NeoCraft's private `files/neomod/ncp-store/packages` directory and rechecks the inventory and SHA-256 digests before commit. Package scripts, native libraries, and other executable content are not run or loaded into Minecraft. This is data storage only; it does not establish publisher authenticity, runtime isolation, or game compatibility.
+
+## Profile snapshot and profile-store core tests (host CI only)
+
+The branch currently includes eight snapshot self-test cases and nine profile-store self-test cases in source, and the workflow defines tasks for both. These are platform-neutral core tests; they do not expose profile management in the Android UI and are not device-testable through the current launcher screen.
+
+Coverage in the source includes:
+- snapshot validation: ID/name/game identity/fingerprint, required resolved dependencies, dependency-first ordering, and duplicate requests;
+- profile storage: save/load, atomic replacement, invalid snapshot rejection, plan mismatch, corrupt/oversized record rejection, symlink rejection, scoped delete, and unsafe ID rejection.
+
+No run for the current branch head has been verified yet. Do not report these cases as passed until CI results for a commit containing them are available.
 
 ## Collect Minecraft diagnostics
 
