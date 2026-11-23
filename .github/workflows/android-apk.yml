@@ -61,8 +61,10 @@ jobs:
           cp patches/NcpDependencyResolverSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpDependencyResolverSelfTest.kt
           cp patches/NcpInstalledPackagePlanResolver.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpInstalledPackagePlanResolver.kt
           cp patches/NcpProfileSnapshot.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpProfileSnapshot.kt
+          cp patches/NcpProfileStore.kt NeoCraft/neomod-core/src/main/kotlin/org/neocraft/neomod/core/NcpProfileStore.kt
           cp patches/NcpInstalledPackagePlanResolverSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpInstalledPackagePlanResolverSelfTest.kt
           cp patches/NcpProfileSnapshotSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpProfileSnapshotSelfTest.kt
+          cp patches/NcpProfileStoreSelfTest.kt NeoCraft/neomod-core/src/test/kotlin/org/neocraft/neomod/core/NcpProfileStoreSelfTest.kt
           cp patches/AndroidGameDiscovery-artifact-digests.kt NeoCraft/android-integration/src/main/kotlin/org/neocraft/neomod/android/AndroidGameDiscovery.kt
           cp patches/MainActivity-diagnostics.kt NeoCraft/app/src/main/java/org/neocraft/launcher/MainActivity.kt
       - name: Set up JDK 17
@@ -113,10 +115,15 @@ jobs:
               classpath = sourceSets["test"].runtimeClasspath
               mainClass.set("org.neocraft.neomod.core.NcpProfileSnapshotSelfTestKt")
           }
+          tasks.register<JavaExec>("ncpProfileStoreSelfTest") {
+              dependsOn(tasks.testClasses)
+              classpath = sourceSets["test"].runtimeClasspath
+              mainClass.set("org.neocraft.neomod.core.NcpProfileStoreSelfTestKt")
+          }
           EOF
       - name: Run NeoMod core self-tests
         working-directory: NeoCraft
-        run: gradle --no-daemon :neomod-core:selfTest :neomod-core:ncpManifestSelfTest :neomod-core:ncpVersionRangeSelfTest :neomod-core:ncpPackageReaderSelfTest :neomod-core:ncpPackageStoreSelfTest :neomod-core:ncpDependencyResolverSelfTest :neomod-core:ncpInstalledPackagePlanSelfTest :neomod-core:ncpProfileSnapshotSelfTest
+        run: gradle --no-daemon :neomod-core:selfTest :neomod-core:ncpManifestSelfTest :neomod-core:ncpVersionRangeSelfTest :neomod-core:ncpPackageReaderSelfTest :neomod-core:ncpPackageStoreSelfTest :neomod-core:ncpDependencyResolverSelfTest :neomod-core:ncpInstalledPackagePlanSelfTest :neomod-core:ncpProfileSnapshotSelfTest :neomod-core:ncpProfileStoreSelfTest
       - name: Build debug APK
         working-directory: NeoCraft
         run: gradle --no-daemon :app:assembleDebug
