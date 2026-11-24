@@ -73,6 +73,7 @@ class NcpProfileStore(storageDirectory: File) {
 
     fun load(profileId: String, plan: NcpInstalledPackagePlan): NcpProfileSnapshot =
         synchronized(lock) {
+            ensureRoot()
             val file = profilePath(profileId)
             if (Files.isSymbolicLink(file)) {
                 fail("NCP_PROFILE_STORE_INVALID", "profile entry must not be a symbolic link")
@@ -117,6 +118,7 @@ class NcpProfileStore(storageDirectory: File) {
     }
 
     fun delete(profileId: String) = synchronized(lock) {
+        ensureRoot()
         val file = profilePath(profileId)
         if (!Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
             fail("NCP_PROFILE_NOT_FOUND", "profile was not found")
