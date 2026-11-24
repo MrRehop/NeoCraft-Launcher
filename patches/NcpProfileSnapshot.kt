@@ -104,8 +104,7 @@ object NcpProfileGameBuildMatcher {
         currentBuild: NcpGameBuildIdentity,
     ): NcpProfileSnapshot {
         NcpProfileSnapshotValidator.validateStructure(snapshot)
-        if (currentBuild.packageName != "com.mojang.minecraftpe" ||
-            currentBuild.versionCode <= 0 ||
+        if (currentBuild.packageName.isBlank() || currentBuild.versionCode <= 0 ||
             !sha256Regex.matches(currentBuild.apkSha256)
         ) {
             fail("NCP_GAME_BUILD_IDENTITY_INVALID", "current Minecraft build identity is incomplete or invalid")
