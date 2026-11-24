@@ -2,7 +2,7 @@
 
 ## Branch-head verification (checked 2026-11-24)
 
-The latest source commit made in this run is `ea518ccaa23f75a937f3940780b781c7cd4d7c78` on `feature/ncp-package-reader`. PR #1 remains open and in Draft state. The GitHub connector returned no PR-triggered workflow entries for the recent follow-up commits; this does not establish whether a push-triggered workflow ran. No CI result for the current branch head is confirmed.
+The latest functional code commit made in this run is `ea518ccaa23f75a937f3940780b781c7cd4d7c78`; subsequent commits in this run update documentation and PR metadata. PR #1 remains open and in Draft state. The GitHub connector returned no PR-triggered workflow entries for the recent follow-up commits; this does not establish whether a push-triggered workflow ran. No CI result for the current branch head is confirmed.
 
 Run #186 below is the latest build independently verified through its GitHub Actions job and artifact records. It predates the profile-root symlink follow-up and the new exact game-build matcher/tests. Do not treat its APK or test results as verification of those later commits.
 
@@ -45,7 +45,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched. If Android refuses to
 3. If found, tap **Запустить Minecraft**.
 4. Confirm Minecraft opens normally.
 
-An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #186 has not yet been tested on the physical device. Launching the game does not prove NeoMod runtime compatibility. Launching the game does not prove NeoMod runtime compatibility.
+An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #186 has not yet been tested on the physical device. Launching the game does not prove NeoMod runtime compatibility.
 
 ## Test the NCP picker and package store
 
