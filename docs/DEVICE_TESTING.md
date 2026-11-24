@@ -1,18 +1,18 @@
 # Android device testing
 
-## Branch-head verification (checked 2026-11-23)
+## Branch-head verification (checked 2026-11-24)
 
-The current PR head is `ddfc2ffaef00b5aca2349ba2d4ed7e1b2b3a4ef6` on `feature/ncp-package-reader`. PR #1 remains open and in Draft state. The workflow-run query for this head returned no PR-triggered runs; CI for this exact commit is therefore **not verified**.
+The latest source commit made in this run is `ea518ccaa23f75a937f3940780b781c7cd4d7c78` on `feature/ncp-package-reader`. PR #1 remains open and in Draft state. The GitHub connector returned no PR-triggered workflow entries for the recent follow-up commits; this does not establish whether a push-triggered workflow ran. No CI result for the current branch head is confirmed.
 
-Run #157 below is still the latest build whose result is confirmed by this project record, but it predates the newer package-store UI and profile snapshot/store sources. Its APK is a baseline only, not a current-head artifact. Do not use it to claim those newer features are build-verified.
+Run #186 below is the latest build independently verified through its GitHub Actions job and artifact records. It predates the profile-root symlink follow-up and the new exact game-build matcher/tests. Do not treat its APK or test results as verification of those later commits.
 
 ## Current PR-branch build
 
-The latest verified PR-branch Android debug build is GitHub Actions [run #157](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793), completed on 2026-11-21 from commit `b40401ee5076752dd138fa2beda84b0a1636e2a9`.
+The latest independently verified PR-branch Android debug build is GitHub Actions [run #186](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45116369676), completed on 2026-11-23 from commit `ddfc2ffaef00b5aca2349ba2d4ed7e1b2b3a4ef6`.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/44866864793/artifacts/14692556327), 925,935 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `9d14a50fdf2e0a32129b762f08e5b288ef9dd97ab7d2a1602be1cc8dd293262c`. It expires on 2027-02-19 at 04:35:36 UTC.
+Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45116369676/artifacts/14791274577), 944,954 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `54ee07abfc32f7230ffc768ce92d813409a6edd743459b7a792ae90245782d37`. It expires on 2027-02-21 at 05:13:03 UTC.
 
-This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI passed the Android debug APK build and all nine self-test groups:
+This is a Debug build from the unmerged `feature/ncp-package-reader` branch. GitHub job logs confirm that the Android `:app:assembleDebug` task succeeded and the following 12 self-test groups passed (138/138 cases total):
 - NeoMod core: 14/14
 - legacy package reader: 14/14
 - package manager: 11/11
@@ -22,10 +22,15 @@ This is a Debug build from the unmerged `feature/ncp-package-reader` branch. CI 
 - NCP package reader: 12/12
 - NCP package store: 10/10
 - NCP dependency resolver: 18/18
+- NCP installed-package plan: 7/7
+- NCP profile snapshot: 8/8
+- NCP profile store: 9/9
+
+Run #186 does not include the later profile-root symlink regression test or the new profile game-build matcher and its five tests.
 
 ## Install on the Samsung Android device
 
-1. Open the latest verified run #157 link above. The new package-store UI integration is pending a subsequent CI build, so do not use this older APK to test the install/manage buttons.
+1. Open the latest verified run #186 link above. Its APK is compile-verified for the package-store UI, but the UI still requires physical-device testing.
 2. In **Artifacts**, download `neocraft-debug-apk`.
 3. Extract `app-debug.apk` from the downloaded ZIP.
 4. Tap the APK and allow installation for the file manager/browser if Android requests it.
@@ -40,7 +45,7 @@ Do not uninstall, replace, or modify Minecraft PE Patched. If Android refuses to
 3. If found, tap **Запустить Minecraft**.
 4. Confirm Minecraft opens normally.
 
-An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #157 has not yet been tested on the device. It includes the smaller resolver search-state test fixture and successfully builds the APK. Launching the game does not prove NeoMod runtime compatibility.
+An earlier physical-device test on 2026-11-15 confirmed successful Minecraft discovery and launch-intent handoff on that earlier build. Run #186 has not yet been tested on the physical device. Launching the game does not prove NeoMod runtime compatibility. Launching the game does not prove NeoMod runtime compatibility.
 
 ## Test the NCP picker and package store
 
@@ -54,7 +59,7 @@ Download the safe [Hello World sample NCP package](https://raw.githubusercontent
 4. For an invalid or unsupported archive, NeoCraft should show a rejection reason.
 5. Repeat with a file larger than 128 MiB; the import staging step should reject it before NCP validation.
 
-### Data-only installation and management (new UI integration; awaiting CI/device verification)
+### Data-only installation and management (CI compile-verified; physical-device verification pending)
 
 1. Tap **Установить NCP (только данные)** and select the Hello World sample.
 2. A successful installation should display the package name, ID, version, verified file count, and confirm that activation was not performed.
@@ -66,13 +71,16 @@ The picker stages the selected document in NeoCraft's private cache with a 128 M
 
 ## Profile snapshot and profile-store core tests (host CI only)
 
-The branch currently includes eight snapshot self-test cases and nine profile-store self-test cases in source, and the workflow defines tasks for both. These are platform-neutral core tests; they do not expose profile management in the Android UI and are not device-testable through the current launcher screen.
+The branch currently includes 13 profile snapshot/game-build matcher self-test cases and 10 profile-store self-test cases in source. These are platform-neutral core tests; they do not expose profile management in the Android UI and are not device-testable through the current launcher screen.
 
-Coverage in the source includes:
+CI run #186 passed the earlier eight snapshot and nine profile-store cases. The later five matcher cases and the tenth store regression test were added after run #186 and are not yet CI-verified.
+
+Coverage in the current source includes:
 - snapshot validation: ID/name/game identity/fingerprint, required resolved dependencies, dependency-first ordering, and duplicate requests;
-- profile storage: save/load, atomic replacement, invalid snapshot rejection, plan mismatch, corrupt/oversized record rejection, symlink rejection, scoped delete, and unsafe ID rejection.
+- game-build matching: exact package name, PackageManager versionCode, and APK SHA-256 match, plus explicit rejection of mismatches or malformed current identity;
+- profile storage: save/load, atomic replacement, invalid snapshot rejection, plan mismatch, corrupt/oversized record rejection, symlink rejection (including replaced profile-root symlink), scoped delete, and unsafe ID rejection.
 
-No run for the current branch head has been verified yet. Do not report these cases as passed until CI results for a commit containing them are available.
+NcpProfileGameBuildMatcher is not yet connected to profile UI. A future activation flow must supply the current installed-game identity and pass this check before offering activation. Do not report the new matcher or profile-root regression tests as passed until CI results for a commit containing them are available.
 
 ## Collect Minecraft diagnostics
 
