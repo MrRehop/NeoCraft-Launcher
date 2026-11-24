@@ -129,6 +129,30 @@ fun main() {
                 Files.deleteIfExists(outside)
             }
         },
+        "replaced profile root symlink is rejected by load and delete" to {
+            val root = Files.createTempDirectory("ncp-profile-root-link-").toFile()
+            val outside = Files.createTempDirectory("ncp-profile-outside-dir-")
+            val profileRoot = root.resolve("profiles").toPath()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                store.save(storeSnapshot(plan), plan)
+                val storedProfile = profileRoot.resolve("survival.ncp-profile")
+                val externalProfile = outside.resolve("survival.ncp-profile")
+                Files.copy(storedProfile, externalProfile)
+                Files.delete(storedProfile)
+                Files.delete(profileRoot)
+                Files.createSymbolicLink(profileRoot, outside)
+
+                expectStoreError("NCP_PROFILE_STORE_INVALID") { store.load("survival", plan) }
+                expectStoreError("NCP_PROFILE_STORE_INVALID") { store.delete("survival") }
+                check(Files.exists(externalProfile)) { "external profile must remain untouched" }
+            } finally {
+                if (Files.isSymbolicLink(profileRoot)) Files.deleteIfExists(profileRoot)
+                root.deleteRecursively()
+                outside.toFile().deleteRecursively()
+            }
+        },
         "delete removes only the selected profile" to {
             val root = Files.createTempDirectory("ncp-profile-delete-").toFile()
             try {
