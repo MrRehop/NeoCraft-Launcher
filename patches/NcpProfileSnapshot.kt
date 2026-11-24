@@ -88,3 +88,40 @@ object NcpProfileSnapshotValidator {
     private fun fail(code: String, message: String): Nothing =
         throw NcpValidationException(code, message)
 }
+
+/**
+ * Checks a saved profile against the game build currently installed on the device.
+ *
+ * This is deliberately separate from snapshot and package-plan validation:
+ * a valid profile and a valid package plan do not prove that the profile targets
+ * the game build currently installed. Call this before offering profile activation.
+ */
+object NcpProfileGameBuildMatcher {
+    private val sha256Regex = Regex("^[a-f0-9]{64}$")
+
+    fun validate(
+        snapshot: NcpProfileSnapshot,
+        currentBuild: NcpGameBuildIdentity,
+    ): NcpProfileSnapshot {
+        NcpProfileSnapshotValidator.validateStructure(snapshot)
+        if (currentBuild.packageName != "com.mojang.minecraftpe" ||
+            currentBuild.versionCode <= 0 ||
+            !sha256Regex.matches(currentBuild.apkSha256)
+        ) {
+            fail("NCP_GAME_BUILD_IDENTITY_INVALID", "current Minecraft build identity is incomplete or invalid")
+        }
+        if (snapshot.gameBuild.packageName != currentBuild.packageName) {
+            fail("NCP_PROFILE_GAME_PACKAGE_MISMATCH", "profile targets a different Android package")
+        }
+        if (snapshot.gameBuild.versionCode != currentBuild.versionCode) {
+            fail("NCP_PROFILE_GAME_VERSION_MISMATCH", "profile targets a different Minecraft versionCode")
+        }
+        if (snapshot.gameBuild.apkSha256 != currentBuild.apkSha256) {
+            fail("NCP_PROFILE_GAME_FINGERPRINT_MISMATCH", "profile targets a different Minecraft APK fingerprint")
+        }
+        return snapshot
+    }
+
+    private fun fail(code: String, message: String): Nothing =
+        throw NcpValidationException(code, message)
+}
