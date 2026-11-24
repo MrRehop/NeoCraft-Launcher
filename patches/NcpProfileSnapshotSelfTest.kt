@@ -68,6 +68,43 @@ fun main() {
             val plan = profilePlan()
             expectProfileError("NCP_PROFILE_INVALID") { NcpProfileSnapshotValidator.validate(validSnapshot(plan).copy(requestedPackages = listOf(NcpDependency("root", "1.0.0"), NcpDependency("root", "1.0.0"))), plan) }
         },
+        "profile accepts the exact currently installed game build" to {
+            val plan = profilePlan()
+            val snapshot = validSnapshot(plan)
+            check(NcpProfileGameBuildMatcher.validate(snapshot, snapshot.gameBuild) == snapshot)
+        },
+        "profile rejects a different Android package" to {
+            val plan = profilePlan()
+            val snapshot = validSnapshot(plan)
+            val otherBuild = snapshot.gameBuild.copy(packageName = "com.example.othergame")
+            expectProfileError("NCP_PROFILE_GAME_PACKAGE_MISMATCH") {
+                NcpProfileGameBuildMatcher.validate(snapshot, otherBuild)
+            }
+        },
+        "profile rejects a different Minecraft versionCode" to {
+            val plan = profilePlan()
+            val snapshot = validSnapshot(plan)
+            val otherBuild = snapshot.gameBuild.copy(versionCode = snapshot.gameBuild.versionCode + 1)
+            expectProfileError("NCP_PROFILE_GAME_VERSION_MISMATCH") {
+                NcpProfileGameBuildMatcher.validate(snapshot, otherBuild)
+            }
+        },
+        "profile rejects a different APK fingerprint" to {
+            val plan = profilePlan()
+            val snapshot = validSnapshot(plan)
+            val otherBuild = snapshot.gameBuild.copy(apkSha256 = "b".repeat(64))
+            expectProfileError("NCP_PROFILE_GAME_FINGERPRINT_MISMATCH") {
+                NcpProfileGameBuildMatcher.validate(snapshot, otherBuild)
+            }
+        },
+        "profile matcher rejects malformed current build identity" to {
+            val plan = profilePlan()
+            val snapshot = validSnapshot(plan)
+            val invalidBuild = snapshot.gameBuild.copy(apkSha256 = "not-a-sha256")
+            expectProfileError("NCP_GAME_BUILD_IDENTITY_INVALID") {
+                NcpProfileGameBuildMatcher.validate(snapshot, invalidBuild)
+            }
+        },
     )
     tests.forEach { (name, test) -> test(); println("PASS: " + name) }
     println("NCP PROFILE SNAPSHOT RESULT: ${tests.size}/${tests.size} tests passed")
