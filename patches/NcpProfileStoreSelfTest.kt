@@ -70,7 +70,7 @@ fun main() {
                 store.save(storeSnapshot(plan), plan)
                 val file = root.resolve("profiles/survival.ncp-profile")
                 val original = file.readText()
-                val corrupted = original.replace("name\\tU3Vydml2YWw\\n", "name\\t\\n")
+                val corrupted = original.replace("name\tU3Vydml2YWw\n", "name\t\n")
                 check(corrupted != original) { "test must change the saved display-name record" }
                 file.writeText(corrupted)
                 expectStoreError("NCP_PROFILE_INVALID") { store.inspect("survival") }
