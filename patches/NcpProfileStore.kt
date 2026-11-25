@@ -71,22 +71,40 @@ class NcpProfileStore(storageDirectory: File) {
             }
         }
 
+    /**
+     * Reads structurally valid profile metadata without asserting that its
+     * package selection is currently resolvable. Callers must resolve the
+     * requested packages and validate the returned snapshot against that plan
+     * before presenting it as eligible for activation.
+     */
+    fun inspect(profileId: String): NcpProfileSnapshot = synchronized(lock) {
+        ensureRoot()
+        val snapshot = readSnapshotLocked(profileId)
+        NcpProfileSnapshotValidator.validateStructure(snapshot)
+    }
+
+    /** Loads a profile only when its saved resolved list matches the supplied verified plan. */
     fun load(profileId: String, plan: NcpInstalledPackagePlan): NcpProfileSnapshot =
         synchronized(lock) {
             ensureRoot()
-            val file = profilePath(profileId)
-            if (Files.isSymbolicLink(file)) {
-                fail("NCP_PROFILE_STORE_INVALID", "profile entry must not be a symbolic link")
-            }
-            if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
-                fail("NCP_PROFILE_NOT_FOUND", "profile was not found")
-            }
-            val snapshot = decode(readLimited(file))
-            if (snapshot.profileId != profileId) {
-                fail("NCP_PROFILE_STORE_INVALID", "profile ID does not match its file name")
-            }
+            val snapshot = readSnapshotLocked(profileId)
             NcpProfileSnapshotValidator.validate(snapshot, plan)
         }
+
+    private fun readSnapshotLocked(profileId: String): NcpProfileSnapshot {
+        val file = profilePath(profileId)
+        if (Files.isSymbolicLink(file)) {
+            fail("NCP_PROFILE_STORE_INVALID", "profile entry must not be a symbolic link")
+        }
+        if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+            fail("NCP_PROFILE_NOT_FOUND", "profile was not found")
+        }
+        val snapshot = decode(readLimited(file))
+        if (snapshot.profileId != profileId) {
+            fail("NCP_PROFILE_STORE_INVALID", "profile ID does not match its file name")
+        }
+        return snapshot
+    }
 
     fun listProfiles(): List<ProfileSummary> = synchronized(lock) {
         ensureRoot()
