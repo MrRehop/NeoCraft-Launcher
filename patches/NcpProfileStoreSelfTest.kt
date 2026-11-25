@@ -50,6 +50,34 @@ fun main() {
                 root.deleteRecursively()
             }
         },
+        "inspect returns structurally valid metadata before dependency resolution" to {
+            val root = Files.createTempDirectory("ncp-profile-inspect-").toFile()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                val snapshot = storeSnapshot(plan)
+                store.save(snapshot, plan)
+                check(store.inspect("survival") == snapshot)
+            } finally {
+                root.deleteRecursively()
+            }
+        },
+        "inspect rejects structurally invalid metadata without a dependency plan" to {
+            val root = Files.createTempDirectory("ncp-profile-inspect-invalid-").toFile()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                store.save(storeSnapshot(plan), plan)
+                val file = root.resolve("profiles/survival.ncp-profile")
+                val original = file.readText()
+                val corrupted = original.replace("name\\tU3Vydml2YWw\\n", "name\\t\\n")
+                check(corrupted != original) { "test must change the saved display-name record" }
+                file.writeText(corrupted)
+                expectStoreError("NCP_PROFILE_INVALID") { store.inspect("survival") }
+            } finally {
+                root.deleteRecursively()
+            }
+        },
         "save atomically replaces an existing profile" to {
             val root = Files.createTempDirectory("ncp-profile-replace-").toFile()
             try {
