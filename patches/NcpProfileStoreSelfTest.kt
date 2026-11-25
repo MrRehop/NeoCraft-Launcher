@@ -119,6 +119,63 @@ fun main() {
                 root.deleteRecursively()
             }
         },
+        "load with current build accepts exact game identity" to {
+            val root = Files.createTempDirectory("ncp-profile-current-build-").toFile()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                val snapshot = storeSnapshot(plan)
+                store.save(snapshot, plan)
+                check(store.load("survival", plan, snapshot.gameBuild) == snapshot)
+            } finally {
+                root.deleteRecursively()
+            }
+        },
+        "load rejects profile for a different current game package" to {
+            val root = Files.createTempDirectory("ncp-profile-current-package-").toFile()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                val snapshot = storeSnapshot(plan)
+                store.save(snapshot, plan)
+                val otherBuild = snapshot.gameBuild.copy(packageName = "com.example.othergame")
+                expectStoreError("NCP_PROFILE_GAME_PACKAGE_MISMATCH") {
+                    store.load("survival", plan, otherBuild)
+                }
+            } finally {
+                root.deleteRecursively()
+            }
+        },
+        "load rejects profile for a different current game version" to {
+            val root = Files.createTempDirectory("ncp-profile-current-version-").toFile()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                val snapshot = storeSnapshot(plan)
+                store.save(snapshot, plan)
+                val otherBuild = snapshot.gameBuild.copy(versionCode = snapshot.gameBuild.versionCode + 1)
+                expectStoreError("NCP_PROFILE_GAME_VERSION_MISMATCH") {
+                    store.load("survival", plan, otherBuild)
+                }
+            } finally {
+                root.deleteRecursively()
+            }
+        },
+        "load rejects profile for a different current APK fingerprint" to {
+            val root = Files.createTempDirectory("ncp-profile-current-fingerprint-").toFile()
+            try {
+                val store = NcpProfileStore(root)
+                val plan = storePlan()
+                val snapshot = storeSnapshot(plan)
+                store.save(snapshot, plan)
+                val otherBuild = snapshot.gameBuild.copy(apkSha256 = "b".repeat(64))
+                expectStoreError("NCP_PROFILE_GAME_FINGERPRINT_MISMATCH") {
+                    store.load("survival", plan, otherBuild)
+                }
+            } finally {
+                root.deleteRecursively()
+            }
+        },
         "corrupted profile record is rejected" to {
             val root = Files.createTempDirectory("ncp-profile-corrupt-").toFile()
             try {
