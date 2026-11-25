@@ -74,6 +74,8 @@ A profile is an immutable, ordered selection of package IDs and resolved version
 
 The NCP package store stores verified package payloads by ID and version. `NcpProfileStore` separately persists validated profile-selection metadata; neither store activates packages or changes Minecraft files.
 
+For the Android profile-selection flow, `NcpProfileStore.inspect(profileId)` returns structurally validated metadata before dependency resolution. The caller must resolve the saved requested package ranges against the current verified package store, compare the saved game identity with the currently installed build using `NcpProfileGameBuildMatcher`, and validate the resolved list against the resulting plan before presenting the profile as activation-eligible. The existing `load(profileId, plan)` remains the strict plan-matching read path. Metadata inspection alone is not activation or compatibility proof.
+
 Installing or updating a package must not mutate another profile.
 
 Before activation, NeoMod must resolve dependencies, validate package integrity, detect known conflicts, and produce a human-readable plan. Failed validation must leave the active profile unchanged.
