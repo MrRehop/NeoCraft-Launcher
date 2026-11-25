@@ -83,13 +83,37 @@ class NcpProfileStore(storageDirectory: File) {
         NcpProfileSnapshotValidator.validateStructure(snapshot)
     }
 
-    /** Loads a profile only when its saved resolved list matches the supplied verified plan. */
+    /**
+     * Loads a profile only when its saved resolved list matches the supplied verified plan.
+     * This overload does not compare the profile's game identity with the currently installed game.
+     */
     fun load(profileId: String, plan: NcpInstalledPackagePlan): NcpProfileSnapshot =
         synchronized(lock) {
-            ensureRoot()
-            val snapshot = readSnapshotLocked(profileId)
-            NcpProfileSnapshotValidator.validate(snapshot, plan)
+            loadValidatedLocked(profileId, plan)
         }
+
+    /**
+     * Loads a profile only when both its saved package plan and current Minecraft identity match.
+     * Use this overload before presenting a profile as eligible for a future activation flow.
+     */
+    fun load(
+        profileId: String,
+        plan: NcpInstalledPackagePlan,
+        currentBuild: NcpGameBuildIdentity,
+    ): NcpProfileSnapshot = synchronized(lock) {
+        val snapshot = loadValidatedLocked(profileId, plan)
+        NcpProfileGameBuildMatcher.validate(snapshot, currentBuild)
+    }
+
+    /** Must be called while holding [lock]. */
+    private fun loadValidatedLocked(
+        profileId: String,
+        plan: NcpInstalledPackagePlan,
+    ): NcpProfileSnapshot {
+        ensureRoot()
+        val snapshot = readSnapshotLocked(profileId)
+        return NcpProfileSnapshotValidator.validate(snapshot, plan)
+    }
 
     private fun readSnapshotLocked(profileId: String): NcpProfileSnapshot {
         val file = profilePath(profileId)
