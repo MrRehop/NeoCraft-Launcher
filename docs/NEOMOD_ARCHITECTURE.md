@@ -25,7 +25,7 @@ The PR #1 branch supplies:
 - a read-only ZIP validator and ZIP metadata guard;
 - exact payload inventory, uncompressed-size, and SHA-256 verification;
 - a transactional data-only package store with staging, re-verification, atomic commit, listing, tamper detection, and uninstall;
-- Android NCP UI actions for read-only validation, explicit data-only installation, installed-package listing, and uninstall. The Android UI is compile-verified by CI run #208; physical-device verification is still pending.
+- Android NCP UI actions for read-only validation, explicit data-only installation, installed-package listing, and uninstall. The Android UI is compile-verified by CI run #212; physical-device verification is still pending.
 
 These changes are delivered through the CI source overlay on `feature/ncp-package-reader`; they are not yet merged into `main`.
 
@@ -51,7 +51,7 @@ A shared library is resolved once to a single compatible version for a selected 
 
 Optional integrations must be declared separately from mandatory dependencies.
 
-The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. Optional dependencies are not auto-selected. It also caps requested packages at 256 and distinct dependency constraint IDs at 4,096. The new `NcpInstalledPackagePlanResolver` bridge accepts a verified store snapshot, runs the resolver, and maps the dependency-first result back to installed package records. Its seven self-tests and the resolver's 18 self-tests passed in CI run #208.
+The NCP v1 manifest decoder and version-range evaluator validate dependency declarations and range semantics. A platform-neutral dependency resolver has now been added on the PR branch: it accepts requested ranges and caller-supplied installed manifests, backtracks across candidate versions, checks API compatibility and declared conflicts, rejects mandatory cycles, and returns dependency-first order. It caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. Optional dependencies are not auto-selected. It also caps requested packages at 256 and distinct dependency constraint IDs at 4,096. The new `NcpInstalledPackagePlanResolver` bridge accepts a verified store snapshot, runs the resolver, and maps the dependency-first result back to installed package records. Its seven self-tests and the resolver's 18 self-tests passed in CI run #212.
 
 ## 5. Conflict model
 
@@ -112,7 +112,7 @@ Breaking changes require a new major API version and an explicit migration path.
 
 ## 10. Profile snapshot model
 
-The PR branch adds a platform-neutral `NcpProfileSnapshot` metadata model and validator. A snapshot records a stable profile ID, display name, exact Minecraft package/versionCode/APK SHA-256 identity, NeoMod API version, requested package ranges, and the dependency-first resolved package ID/version/order list. Validation compares the resolved list against a previously verified `NcpInstalledPackagePlan` and rejects incomplete game fingerprints, invalid identifiers, duplicate requests, malformed version ranges, and mismatched package order or versions. `NcpProfileStore` persists these snapshots in a private `.ncp-profile` text format with strict UTF-8/base64 decoding, size/record limits, symbolic-link checks, fsync, and same-directory atomic replacement. Save/load require a verified package plan; listing performs structural validation; delete is profile-ID scoped. The store revalidates its profile root before listing, load, and delete. A separate `NcpProfileGameBuildMatcher` compares a saved profile with the currently installed game identity by Android package name, PackageManager versionCode, and APK SHA-256. The three-argument `load(profileId, plan, currentBuild)` path now composes package-plan validation with this exact-build check. This remains metadata-only: it does not persist package payloads, activate profiles, or modify Minecraft. CI run #208 on 2026-11-25 passed all 13 snapshot/matcher tests and all 16 profile-store tests, including the four new three-argument load integration cases.
+The PR branch adds a platform-neutral `NcpProfileSnapshot` metadata model and validator. A snapshot records a stable profile ID, display name, exact Minecraft package/versionCode/APK SHA-256 identity, NeoMod API version, requested package ranges, and the dependency-first resolved package ID/version/order list. Validation compares the resolved list against a previously verified `NcpInstalledPackagePlan` and rejects incomplete game fingerprints, invalid identifiers, duplicate requests, malformed version ranges, and mismatched package order or versions. `NcpProfileStore` persists these snapshots in a private `.ncp-profile` text format with strict UTF-8/base64 decoding, size/record limits, symbolic-link checks, fsync, and same-directory atomic replacement. Save/load require a verified package plan; listing performs structural validation; delete is profile-ID scoped. The store revalidates its profile root before listing, load, and delete. A separate `NcpProfileGameBuildMatcher` compares a saved profile with the currently installed game identity by Android package name, PackageManager versionCode, and APK SHA-256. The three-argument `load(profileId, plan, currentBuild)` path now composes package-plan validation with this exact-build check. This remains metadata-only: it does not persist package payloads, activate profiles, or modify Minecraft. CI run #212 on 2026-11-25 passed all 13 snapshot/matcher tests and all 16 profile-store tests, including the four new three-argument load integration cases.
 
 ## 11. Current implementation status
 
@@ -120,7 +120,7 @@ The repository contains launcher-side Minecraft discovery and diagnostics, a rev
 
 The PR #1 branch adds the NCP v1 manifest decoder, version-range evaluator, ZIP metadata guard, read-only package validator, transactional data-only package store, Android NCP validation/install/manage UI, dependency resolver, installed-package plan bridge, profile snapshot validator, and metadata-only profile store.
 
-GitHub Actions [run #208](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45633303912), commit `1bb191c28be82427050a2c4fd76039e60f232349`, completed successfully on 2026-11-25. Its job logs confirm 12 self-test groups passed (150/150 cases):
+GitHub Actions [run #212](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866), commit `dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5`, completed successfully on 2026-11-25. Its job logs confirm 12 self-test groups passed (150/150 cases):
 - NeoMod core: 14/14
 - legacy package reader: 14/14
 - package manager: 11/11
@@ -134,7 +134,7 @@ GitHub Actions [run #208](https://github.com/MrRehop/NeoCraft-Launcher/actions/r
 - NCP profile snapshot/game-build matcher: 13/13
 - NCP profile store: 16/16
 
-The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk` (artifact ZIP 945,691 bytes; SHA-256 of the artifact ZIP `d60a65af27065a798c2f6335bffe30b65b6415672b6021f2c755ac8d42051d50`). This verifies the current PR-branch source at commit `1bb191c`, including the three-argument profile-load overload and its four integration tests.
+The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk` (artifact ZIP 950,953 bytes; SHA-256 of the artifact ZIP `a904e7ff10e660920c129862e23df12ca362c0c9ec217e0d4d32ec5f2a1450ab`). This verifies the current PR-branch source at commit `1bb191c`, including the three-argument profile-load overload and its four integration tests.
 
 Run #202 includes the profile-root revalidation and its symlink regression test. Run #208 includes `NcpProfileGameBuildMatcher`, `NcpProfileStore.load(profileId, plan, currentBuild)`, and the integration tests for exact identity plus package, versionCode, and fingerprint mismatch rejection.
 
@@ -142,7 +142,7 @@ The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate
 
 The following remain unimplemented or unverified:
 - NCP publisher signature/trust model;
-- profile creation, editing, package selection, and activation flow (the current Android UI only lists profiles and displays their saved metadata);
+- profile creation, editing, package selection, dependency re-resolution in the Android UI, and activation flow (the current Android UI lists/inspects metadata and supports confirmed deletion of one profile metadata file);
 - NCP namespaced content registry;
 - NCP conflict engine;
 - profile activation and rollback;
@@ -150,6 +150,19 @@ The following remain unimplemented or unverified:
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
 
-The existing Android NCP package-management UI has compile verification. A read-only NeoMod profile browser has now been added to `MainActivity-diagnostics.kt`: it lists structurally validated profiles and displays the saved snapshot through `inspect()`. It deliberately does not resolve dependencies again, compare the snapshot with the currently installed Minecraft build, or activate anything; its compile verification and physical-device testing are still pending. The NCP package store and profile store are data-only: they do not execute package code, activate mods, or prove in-game compatibility. Offline/LAN must be treated as unimplemented until a working transport/session design and device-to-device test demonstrate it.
+The existing Android NCP package-management UI and read-only NeoMod profile browser have compile verification in run #212. The browser lists structurally validated profiles, displays saved snapshots through inspect(), and supports explicit confirmation-based deletion of one profile metadata file through delete(profileId). It deliberately does not create/edit profiles, resolve dependencies again, compare the snapshot with the currently installed Minecraft build, uninstall NCP packages, or activate anything. Physical-device testing is still pending. The NCP package store and profile store are data-only: they do not execute package code, activate mods, or prove in-game compatibility. Offline/LAN must be treated as unimplemented until a working transport/session design and device-to-device test demonstrate it.
 
 This status must be updated only when code and tests demonstrate the feature.
+
+
+## 12. Archived Minecraft candidate APK: static identity evidence
+
+The Library artifact com.mojang.minecraftpe-972601301.apk (452,964,617 bytes) was independently read from the Library and analyzed in the build container on 2026-11-26.
+
+- APK SHA-256: 6a50dea2136f8620a6d72a00f9b117f87dc1dd3f4839b8363c520d8e79d8a916.
+- Decoded AndroidManifest.xml: package com.mojang.minecraftpe, versionName 1.26.13.1, manifest versionCode 972601301.
+- APK Signing Block contains v2 and v3 signer records. The DER certificate SHA-256 extracted from both records is b369922ee3e720f359b9eec13af554dc87a0ec09f3ac49e7e123bc94fb985890, matching the fingerprint previously reported from the device screen.
+- The user-provided number 792601301 differs from this archived APK's manifest versionCode. It must not be treated as the PackageManager versionCode without a fresh on-device diagnostic report.
+- This is static evidence for the archived file only. The installed Samsung PackageManager identity has not yet been independently compared with it. The APK signature was not cryptographically re-verified in this analysis, and no NeoMod runtime compatibility probe has passed.
+
+Keep this build out of ReviewedGameBuilds until the installed device identity and a harmless version-specific runtime probe are both verified.

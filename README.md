@@ -10,14 +10,14 @@ The current NCP implementation and Android picker are being developed in [Pull R
 
 ## Latest verified PR-branch build
 
-- GitHub Actions [run #208](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45633303912), commit `1bb191c28be82427050a2c4fd76039e60f232349`, completed successfully on 2026-11-25.
-- Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45633303912/artifacts/15031792416), 945,691 bytes (workflow artifact ZIP). SHA-256: `d60a65af27065a798c2f6335bffe30b65b6415672b6021f2c755ac8d42051d50`. Artifact expires 2027-02-23 14:22:16 UTC.
-- CI used JDK 17 and Gradle 8.7. The `:app:assembleDebug` task completed successfully and the artifact was uploaded.
+- GitHub Actions [run #212](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866), commit dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5, completed successfully on 2026-11-26.
+- Artifact: [neocraft-debug-apk](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866/artifacts/15125156968), 950,953 bytes (workflow artifact ZIP). SHA-256: a904e7ff10e660920c129862e23df12ca362c0c9ec217e0d4d32ec5f2a1450ab. Artifact expires 2027-02-24 14:08:58 UTC.
+- CI used JDK 17 and Gradle 8.7. Android :app:assembleDebug completed successfully.
 - The run passed 12 self-test groups (150/150 cases): NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP version range 12/12; NCP ZIP reader 12/12; NCP package store 10/10; NCP dependency resolver 18/18; installed-package plan 7/7; profile snapshot/game-build matcher 13/13; profile store 16/16.
 - A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
-- The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. It stages selected archives in private cache with a 128 MiB input limit. Stored packages are not activated or loaded into Minecraft. The UI compiles in run #208; physical-device verification is still pending.
-- Run #204 has not yet been tested on the physical Samsung device.
-- The current PR branch adds a three-argument `NcpProfileStore.load(profileId, plan, currentBuild)` path that combines plan validation with exact Minecraft build identity matching. The four new store integration tests passed in run #208.
+- The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. Stored packages are not activated or loaded into Minecraft.
+- The Android profile browser lists structurally valid saved profiles and displays their stored metadata. The profile detail screen now offers explicit confirmation-based deletion of only the selected .ncp-profile metadata file. It does not create or edit profiles, resolve dependencies, compare the profile against the currently installed game, or activate packages.
+- Run #212 compile-verifies the profile deletion UI. The Debug APK is from the unmerged feature/ncp-package-reader branch and has not been tested on the physical Samsung device.
 
 See [device testing](./docs/DEVICE_TESTING.md) for installation and manual checks.
 
@@ -25,7 +25,7 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 
 - Minecraft package discovery, identity diagnostics, and launch-intent handoff are implemented.
 - The reviewed Minecraft build allow-list is intentionally empty. Discovering or launching a game does not establish NeoMod compatibility.
-- Minecraft PE Patched 1.26.13.1 (`com.mojang.minecraftpe`, versionCode `972601301`) is recorded as a candidate from the device report only. Its exported APK and signer identity have not been independently re-hashed in the current build environment, and no runtime compatibility probe has passed.
+- Minecraft PE Patched 1.26.13.1 remains an unreviewed candidate. The archived APK file was independently hashed and parsed: SHA-256 6a50dea2136f8620a6d72a00f9b117f87dc1dd3f4839b8363c520d8e79d8a916; manifest package com.mojang.minecraftpe, versionName 1.26.13.1, versionCode 972601301; certificate fingerprint extracted from its APK v2/v3 signing block b369922ee3e720f359b9eec13af554dc87a0ec09f3ac49e7e123bc94fb985890. This is static evidence for the archived APK only, not a PackageManager read from the installed Samsung app. The separately user-reported number 792601301 does not match this manifest and remains unverified. No runtime compatibility probe has passed.
 - NCP v1 manifest decoding, read-only ZIP validation, ZIP metadata checks, and a transactional data-only package store are implemented on the PR branch and pass the listed CI tests.
 - The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. Stored packages are not activated or loaded into Minecraft.
 - The NCP dependency resolver's 18 self-tests and the seven `NcpInstalledPackagePlanResolver` tests passed in run #208. The resolver caps candidate manifests at 4,096, selected packages at 256, and search states at 10,000. The installed-package plan bridge maps resolved manifests back to verified installed-store records and verifies that a selected compatible version maps to its exact installed directory when multiple versions coexist. The bridge is not surfaced in profile UI. `NcpProfileGameBuildMatcher` compares a saved profile against the current Android package name, PackageManager versionCode, and APK SHA-256; its 13 snapshot/matcher tests passed in run #208. All 16 current profile-store tests, including the four game-build-checked load integration tests, passed in run #208. NCP profile activation, runtime loading into Minecraft, and a version-specific game adapter remain unimplemented.
@@ -35,4 +35,4 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 No in-game mod injection, native patching, or Minecraft modification is claimed.
 
 
-- The latest verified APK listed above includes the NCP data-only package-store UI, installed-package plan bridge, profile-root symlink protection, and profile game-build matcher. It includes the game-build-checked profile-store load overload and its four passing integration tests, but does not include a profile-management screen.
+- The latest verified APK listed above includes the NCP data-only package-store UI, installed-package plan bridge, profile-root symlink protection, profile game-build matcher, read-only profile browser, and confirmation-based deletion of one profile metadata file. It does not include profile creation/editing, dependency re-resolution in the UI, or activation.

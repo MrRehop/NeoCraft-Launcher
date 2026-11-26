@@ -1,14 +1,14 @@
 # Android device testing
 
-## Branch-head verification (checked 2026-11-25)
+## Branch-head verification (checked 2026-11-26)
 
-PR #1 remains open and in Draft state. Current branch head `1bb191c28be82427050a2c4fd76039e60f232349` is covered by GitHub Actions run #208, which passed all 150 self-test cases and Android `:app:assembleDebug`. The run includes the game-build-checked profile load overload and its four integration tests. No Android profile-management screen or Minecraft runtime activation is claimed.
+PR #1 remains open and in Draft state. Current branch head dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5 is covered by GitHub Actions run #212, which passed all 150 self-test cases and Android :app:assembleDebug. The build includes the read-only NeoMod profile browser and its confirmation-based metadata deletion action. Profile creation/editing, package selection, runtime activation, and Minecraft runtime compatibility are not implemented.
 
 ## Current PR-branch build
 
-The latest independently verified PR-branch Android debug build is GitHub Actions [run #208](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45633303912), completed on 2026-11-25 from commit `1bb191c28be82427050a2c4fd76039e60f232349`.
+The latest independently verified PR-branch Android debug build is GitHub Actions [run #212](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866), completed on 2026-11-26 from commit dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5.
 
-Artifact: [`neocraft-debug-apk`](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45633303912/artifacts/15031792416), 945,691 bytes (artifact ZIP). SHA-256 of the artifact ZIP: `d60a65af27065a798c2f6335bffe30b65b6415672b6021f2c755ac8d42051d50`. It expires on 2027-02-23 at 14:22:16 UTC.
+Artifact: [neocraft-debug-apk](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866/artifacts/15125156968), 950,953 bytes (artifact ZIP). SHA-256 of the artifact ZIP: a904e7ff10e660920c129862e23df12ca362c0c9ec217e0d4d32ec5f2a1450ab. It expires on 2027-02-24 at 14:08:58 UTC.
 
 This is a Debug build from the unmerged `feature/ncp-package-reader` branch. GitHub job logs confirm that Android `:app:assembleDebug` succeeded and the following 12 self-test groups passed (150/150 cases total):
 - NeoMod core: 14/14
@@ -28,7 +28,7 @@ Run #208 includes the profile-root symlink regression test, exact game-build mat
 
 ## Install on the Samsung Android device
 
-1. Open the latest verified run #208 link above. Its APK is compile-verified for the package-store UI and profile-load core changes, but the UI still requires physical-device testing.
+1. Open the latest verified run #212 link above. Its APK is compile-verified for the package-store UI and profile-load core changes, but the UI still requires physical-device testing.
 2. In **Artifacts**, download `neocraft-debug-apk`.
 3. Extract `app-debug.apk` from the downloaded ZIP.
 4. Tap the APK and allow installation for the file manager/browser if Android requests it.
@@ -76,7 +76,18 @@ Coverage in the current source includes:
 - game-build matching: exact package name, PackageManager versionCode, and APK SHA-256 match, plus explicit rejection of mismatches or malformed current identity;
 - profile storage: save/load, atomic replacement, invalid snapshot rejection, plan mismatch, corrupt/oversized record rejection, symlink rejection (including replaced profile-root symlink), scoped delete, and unsafe ID rejection.
 
-NcpProfileGameBuildMatcher is not yet connected to profile UI. The three-argument store load path composes it with package-plan validation and passed CI run #208. A future activation flow must supply the current installed-game identity and pass this check before offering activation. The Android profile-management screen and activation flow remain unimplemented.
+NcpProfileGameBuildMatcher is not yet connected to profile UI. The three-argument store load path composes it with package-plan validation and passed CI run #212. A future activation flow must supply the current installed-game identity and pass this check before offering activation. Profile creation, editing, package selection, dependency re-resolution in the UI, and activation remain unimplemented. The read-only browser and metadata deletion are compile-verified in run #212.
+
+## Read-only NeoMod profile browser and metadata deletion (CI compile-verified; physical-device testing pending)
+
+1. Open **Профили NeoMod (просмотр)**.
+2. Confirm that saved profiles appear with their display name, ID, saved Minecraft versionCode, and resolved package count.
+3. Select a profile and inspect its saved package list and recorded game fingerprint.
+4. In the details dialog, tap **Удалить профиль**. Choose **Отмена** once to verify that cancellation leaves the profile intact.
+5. Reopen the same profile, tap **Удалить профиль**, then confirm **Удалить**.
+6. Confirm the profile disappears from the list. The UI should state that only profile metadata was removed; installed NCP package data and Minecraft files are not modified.
+
+The browser calls listProfiles() and inspect(). It performs structural metadata validation only; it does not re-resolve dependencies or compare the saved game identity with the currently installed Minecraft build. Deletion calls NcpProfileStore.delete(profileId) after an explicit confirmation. It removes one .ncp-profile metadata file and does not uninstall referenced NCP packages or modify Minecraft. Profile creation, editing, package selection, and activation are not implemented.
 
 ## Collect Minecraft diagnostics
 
@@ -84,7 +95,7 @@ NcpProfileGameBuildMatcher is not yet connected to profile UI. The three-argumen
 2. Tap **Скопировать диагностику**.
 3. Review the text and paste the report into the NeoCraft development conversation.
 
-The reviewed game-build allow-list remains intentionally empty. The reported Minecraft PE Patched 1.26.13.1 identity is a candidate only; the original APK has not yet been independently re-hashed in the current build environment, and no NeoMod runtime probe has passed.
+The reviewed game-build allow-list remains intentionally empty. The archived APK file was independently hashed and parsed: SHA-256 6a50dea2136f8620a6d72a00f9b117f87dc1dd3f4839b8363c520d8e79d8a916; manifest package com.mojang.minecraftpe, versionName 1.26.13.1, versionCode 972601301; signer certificate fingerprint from APK v2/v3 block b369922ee3e720f359b9eec13af554dc87a0ec09f3ac49e7e123bc94fb985890. This proves the archived APK's static identity only. The user-reported number 792601301 differs from the manifest and is not verified as PackageManager versionCode on the installed Samsung app. No NeoMod runtime probe has passed.
 
 ## Privacy and safety
 
