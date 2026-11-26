@@ -719,12 +719,61 @@ class MainActivity : Activity() {
                     AlertDialog.Builder(this)
                         .setTitle(snapshot.displayName)
                         .setView(scroll)
+                        .setNeutralButton("Удалить профиль") { _, _ ->
+                            confirmDeleteNeoModProfile(snapshot.profileId, snapshot.displayName)
+                        }
                         .setPositiveButton("К списку") { _, _ -> showNeoModProfiles() }
                         .setNegativeButton("Закрыть", null)
                         .show()
                     status.text = "Профиль ${snapshot.displayName} прочитан. Совместимость и активация не подтверждены."
                 }.onFailure { error ->
                     status.text = "Не удалось открыть профиль ${profileId}: ${error.message ?: error.javaClass.simpleName}"
+                }
+            }
+        }
+    }
+
+    private fun confirmDeleteNeoModProfile(profileId: String, displayName: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Удалить профиль NeoMod?")
+            .setMessage(
+                "$displayName ($profileId) будет удалён из списка профилей NeoCraft. " +
+                    "Установленные NCP-пакеты и файлы Minecraft не изменяются."
+            )
+            .setNegativeButton("Отмена", null)
+            .setPositiveButton("Удалить") { _, _ -> deleteNeoModProfile(profileId) }
+            .show()
+    }
+
+    private fun deleteNeoModProfile(profileId: String) {
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
+        profilesButton.isEnabled = false
+        status.text = "Удаление метаданных профиля NeoMod…"
+
+        inspectionExecutor.execute {
+            val result = runCatching {
+                NcpProfileStore(java.io.File(filesDir, "neomod")).delete(profileId)
+            }
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+                profilesButton.isEnabled = true
+                result.onSuccess {
+                    Toast.makeText(
+                        this,
+                        "Профиль $profileId удалён. NCP-пакеты и Minecraft не изменены.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    showNeoModProfiles()
+                }.onFailure { error ->
+                    status.text = "Не удалось удалить профиль $profileId: ${error.message ?: error.javaClass.simpleName}"
                 }
             }
         }
