@@ -31,7 +31,9 @@ This analysis extracts the certificate and metadata; it does not perform a full 
 
 The user previously reported a displayed number 792601301 next to version 1.26.13.1, while this archived APK's AndroidManifest.xml declares versionCode 972601301. The number 792601301 is not confirmed as Android versionCode.
 
-The static manifest value is not a substitute for querying the installed package with Android PackageManager. On the Samsung SM-A225F, run NeoCraft's **Проверить Minecraft** diagnostic and confirm that it reports:
+The Stage10 device-evidence archive contains a user-provided NeoCraft diagnostic report dated 2026-11-15 that records PackageManager versionCode 972601301, signer SHA-256 b369922ee3e720f359b9eec13af554dc87a0ec09f3ac49e7e123bc94fb985890, and base.apk SHA-256 6a50dea2136f8620a6d72a00f9b117f87dc1dd3f4839b8363c520d8e79d8a916. These match the static analysis above. That prior device report has not been freshly re-collected during this run. The separately mentioned number 792601301 differs from both the APK manifest and the prior device report and remains unverified.
+
+For a fresh confirmation on the Samsung SM-A225F, run NeoCraft's **Проверить Minecraft** diagnostic and confirm that it reports:
 
 - Package: com.mojang.minecraftpe
 - Version name: 1.26.13.1

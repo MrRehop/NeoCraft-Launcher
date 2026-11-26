@@ -2,7 +2,7 @@
 
 ## Branch-head verification (checked 2026-11-26)
 
-PR #1 remains open and in Draft state. Current branch head dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5 is covered by GitHub Actions run #212, which passed all 150 self-test cases and Android :app:assembleDebug. The build includes the read-only NeoMod profile browser and its confirmation-based metadata deletion action. Profile creation/editing, package selection, runtime activation, and Minecraft runtime compatibility are not implemented.
+PR #1 remains open and in Draft state. The latest code-bearing commit dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5 is covered by GitHub Actions run #212, which passed all 150 self-test cases and Android :app:assembleDebug. The subsequent documentation-only commit 9b913e9e6c81ab727a4946502932d3f0b41be073 passed run #213. The verified build includes the read-only NeoMod profile browser and its confirmation-based metadata deletion action. Profile creation/editing, package selection, runtime activation, and Minecraft runtime compatibility are not implemented.
 
 ## Current PR-branch build
 
@@ -95,7 +95,7 @@ The browser calls listProfiles() and inspect(). It performs structural metadata 
 2. Tap **Скопировать диагностику**.
 3. Review the text and paste the report into the NeoCraft development conversation.
 
-The reviewed game-build allow-list remains intentionally empty. The archived APK file was independently hashed and parsed: SHA-256 6a50dea2136f8620a6d72a00f9b117f87dc1dd3f4839b8363c520d8e79d8a916; manifest package com.mojang.minecraftpe, versionName 1.26.13.1, versionCode 972601301; signer certificate fingerprint from APK v2/v3 block b369922ee3e720f359b9eec13af554dc87a0ec09f3ac49e7e123bc94fb985890. This proves the archived APK's static identity only. The user-reported number 792601301 differs from the manifest and is not verified as PackageManager versionCode on the installed Samsung app. No NeoMod runtime probe has passed.
+The reviewed game-build allow-list remains intentionally empty. The archived APK file was independently hashed and parsed: SHA-256 6a50dea2136f8620a6d72a00f9b117f87dc1dd3f4839b8363c520d8e79d8a916; manifest package com.mojang.minecraftpe, versionName 1.26.13.1, versionCode 972601301; signer certificate fingerprint from APK v2/v3 block b369922ee3e720f359b9eec13af554dc87a0ec09f3ac49e7e123bc94fb985890. The Stage10 device-evidence archive also contains a user-provided NeoCraft diagnostic report dated 2026-11-15 that records PackageManager versionCode 972601301 and the same signer/base.apk digests. It has not been freshly re-collected in this run. The separately mentioned number 792601301 does not match the manifest or that prior report and remains unverified. No NeoMod runtime probe has passed.
 
 ## Privacy and safety
 
