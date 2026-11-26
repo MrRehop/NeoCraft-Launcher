@@ -134,15 +134,15 @@ GitHub Actions [run #208](https://github.com/MrRehop/NeoCraft-Launcher/actions/r
 - NCP profile snapshot/game-build matcher: 13/13
 - NCP profile store: 16/16
 
-The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk` (artifact ZIP 945,582 bytes; SHA-256 of the artifact ZIP `94500b9263285a1213e05c0ccff2bac7a4da6bc1080574652c704f8069bc4b0c`). This verifies the current PR-branch source at commit `1bb191c`, including the three-argument profile-load overload and its four integration tests.
+The Android `:app:assembleDebug` task also succeeded and uploaded `neocraft-debug-apk` (artifact ZIP 945,691 bytes; SHA-256 of the artifact ZIP `d60a65af27065a798c2f6335bffe30b65b6415672b6021f2c755ac8d42051d50`). This verifies the current PR-branch source at commit `1bb191c`, including the three-argument profile-load overload and its four integration tests.
 
-Run #202 includes the profile-root revalidation, its symlink regression test, `NcpProfileGameBuildMatcher`, and all 13 snapshot/matcher tests. A subsequent source change adds `NcpProfileStore.load(profileId, plan, currentBuild)` and four integration tests for exact identity plus package, versionCode, and fingerprint mismatch rejection. Those four tests are not covered by run #208 and require the next workflow.
+Run #202 includes the profile-root revalidation and its symlink regression test. Run #208 includes `NcpProfileGameBuildMatcher`, `NcpProfileStore.load(profileId, plan, currentBuild)`, and the integration tests for exact identity plus package, versionCode, and fingerprint mismatch rejection.
 
 The Minecraft PE 1.26.13.1 identity report is recorded as a discovered candidate. It is not reviewed or enabled: the APK/signing identity has not been independently re-hashed in the current build environment, and no NeoMod compatibility probe has passed. `ReviewedGameBuilds` must remain empty for this candidate.
 
 The following remain unimplemented or unverified:
 - NCP publisher signature/trust model;
-- profile UI integration and profile selection flow;
+- profile creation, editing, package selection, and activation flow (the current Android UI only lists profiles and displays their saved metadata);
 - NCP namespaced content registry;
 - NCP conflict engine;
 - profile activation and rollback;
@@ -150,6 +150,6 @@ The following remain unimplemented or unverified:
 - runtime compatibility with Minecraft 1.26.13.1;
 - offline/LAN support.
 
-The Android UI has compile verification but still needs physical-device testing. The NCP package store and profile store are data-only: they do not execute package code, activate mods, or prove in-game compatibility. Offline/LAN must be treated as unimplemented until a working transport/session design and device-to-device test demonstrate it.
+The existing Android NCP package-management UI has compile verification. A read-only NeoMod profile browser has now been added to `MainActivity-diagnostics.kt`: it lists structurally validated profiles and displays the saved snapshot through `inspect()`. It deliberately does not resolve dependencies again, compare the snapshot with the currently installed Minecraft build, or activate anything; its compile verification and physical-device testing are still pending. The NCP package store and profile store are data-only: they do not execute package code, activate mods, or prove in-game compatibility. Offline/LAN must be treated as unimplemented until a working transport/session design and device-to-device test demonstrate it.
 
 This status must be updated only when code and tests demonstrate the feature.
