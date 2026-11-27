@@ -32,6 +32,7 @@ class MainActivity : Activity() {
     private lateinit var installNcpButton: Button
     private lateinit var manageNcpButton: Button
     private lateinit var profilesButton: Button
+    private lateinit var createProfileButton: Button
     private var diagnosticReport: String? = null
     private val inspectionExecutor = Executors.newSingleThreadExecutor()
     private var inspectionToken = 0
@@ -46,6 +47,7 @@ class MainActivity : Activity() {
         const val MAX_DEX_TYPES = 250_000
         const val MAX_DEX_CLASSES = 150_000
         const val MAX_DEX_METHODS = 200_000
+        const val CURRENT_NEOMOD_API_VERSION = "1.0.0"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,6 +99,10 @@ class MainActivity : Activity() {
             text = "Профили NeoMod (просмотр)"
             setOnClickListener { showNeoModProfiles() }
         }
+        createProfileButton = Button(this).apply {
+            text = "Создать профиль NeoMod"
+            setOnClickListener { beginCreateNeoModProfile() }
+        }
         val mods = Button(this).apply {
             text = "NeoMod — скоро"
             isEnabled = false
@@ -110,6 +116,7 @@ class MainActivity : Activity() {
         layout.addView(installNcpButton)
         layout.addView(manageNcpButton)
         layout.addView(profilesButton)
+        layout.addView(createProfileButton)
         layout.addView(mods)
         val scroll = ScrollView(this).apply { addView(layout) }
         setContentView(scroll)
@@ -124,6 +131,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Проверка Minecraft и анализ APK…"
         val request = ++inspectionToken
 
@@ -192,6 +200,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
             }
         }
     }
@@ -505,6 +514,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Проверка NCP-пакета…"
 
         inspectionExecutor.execute {
@@ -536,6 +546,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
             }
         }
     }
@@ -547,6 +558,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Установка NCP в приватное хранилище (только данные)…"
 
         inspectionExecutor.execute {
@@ -578,6 +590,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
             }
         }
     }
@@ -589,6 +602,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Проверка установленного NCP-хранилища…"
         inspectionExecutor.execute {
             val result = runCatching {
@@ -601,6 +615,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
                 result.onSuccess { packages ->
                     if (packages.isEmpty()) {
                         status.text = "В приватном хранилище NeoCraft нет NCP-пакетов"
@@ -632,6 +647,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Чтение сохранённых профилей NeoMod…"
 
         inspectionExecutor.execute {
@@ -645,6 +661,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
                 result.onSuccess { profiles ->
                     if (profiles.isEmpty()) {
                         status.text = "Сохранённых профилей NeoMod пока нет"
@@ -666,6 +683,203 @@ class MainActivity : Activity() {
         }
     }
 
+    /**
+     * Creates a profile from already-installed, integrity-checked NCP packages.
+     * The operation stores selection metadata only; it never activates packages.
+     */
+    private fun beginCreateNeoModProfile() {
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
+        profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
+        status.text = "Проверка Minecraft и установленного NCP-хранилища…"
+
+        inspectionExecutor.execute {
+            val result = runCatching {
+                val game = when (val discovery = AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")) {
+                    is GameDiscoveryResult.Found -> discovery.fingerprint
+                    is GameDiscoveryResult.NotInstalled ->
+                        throw IllegalStateException("Minecraft \${discovery.packageName} не установлена")
+                    is GameDiscoveryResult.Unknown ->
+                        throw IllegalStateException("Не удалось проверить Minecraft: \${discovery.reason}")
+                }
+                if (game.artifactDigests["base.apk"].isNullOrBlank()) {
+                    throw IllegalStateException("Android не предоставил SHA-256 установленного base.apk")
+                }
+                val installed = NcpPackageStore(java.io.File(filesDir, "neomod/ncp-store")).listInstalled()
+                if (installed.isEmpty()) {
+                    throw IllegalStateException("Сначала установите хотя бы один проверенный NCP-пакет")
+                }
+                installed
+            }
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+                profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
+                result.onSuccess { packages ->
+                    showNcpProfilePackageSelection(packages)
+                }.onFailure { error ->
+                    status.text = "Невозможно создать профиль: \${error.message ?: error.javaClass.simpleName}"
+                }
+            }
+        }
+    }
+
+    private fun showNcpProfilePackageSelection(packages: List<NcpPackageStore.InstalledPackage>) {
+        val labels = packages.map { "\${it.name} (\${it.id}) v\${it.version}" }.toTypedArray()
+        val checked = BooleanArray(packages.size)
+
+        AlertDialog.Builder(this)
+            .setTitle("Пакеты для нового профиля")
+            .setMessage("Выберите одну установленную версию каждого пакета. Обязательные зависимости будут разрешены автоматически. Профиль сохраняет метаданные и ничего не активирует.")
+            .setMultiChoiceItems(labels, checked) { dialog, which, isChecked ->
+                if (isChecked) {
+                    val list = (dialog as? AlertDialog)?.listView
+                    for (index in packages.indices) {
+                        if (index != which && packages[index].id == packages[which].id) {
+                            checked[index] = false
+                            list?.setItemChecked(index, false)
+                        }
+                    }
+                }
+                checked[which] = isChecked
+            }
+            .setPositiveButton("Далее") { _, _ ->
+                val selected = packages.filterIndexed { index, _ -> checked[index] }
+                if (selected.isEmpty()) {
+                    Toast.makeText(this, "Выберите хотя бы один NCP-пакет", Toast.LENGTH_LONG).show()
+                } else {
+                    promptNeoModProfileName(selected)
+                }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun promptNeoModProfileName(selectedPackages: List<NcpPackageStore.InstalledPackage>) {
+        val nameInput = android.widget.EditText(this).apply {
+            hint = "Например, Survival"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setSingleLine(true)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Название профиля")
+            .setMessage("Будет сохранён выбранный набор пакетов и автоматически разрешённые обязательные зависимости.")
+            .setView(nameInput)
+            .setNegativeButton("Отмена", null)
+            .setPositiveButton("Создать") { _, _ ->
+                createNeoModProfile(nameInput.text.toString(), selectedPackages)
+            }
+            .show()
+    }
+
+    private fun createNeoModProfile(
+        requestedName: String,
+        selectedPackages: List<NcpPackageStore.InstalledPackage>,
+    ) {
+        val displayName = requestedName.trim()
+        if (displayName.isEmpty() || displayName.length > 80) {
+            Toast.makeText(this, "Название должно содержать от 1 до 80 символов", Toast.LENGTH_LONG).show()
+            return
+        }
+        val packageIds = selectedPackages.map { it.id }
+        if (packageIds.distinct().size != packageIds.size) {
+            Toast.makeText(this, "Для каждого ID можно выбрать только одну версию", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        val requests = selectedPackages.map { installed ->
+            org.neocraft.neomod.core.NcpDependency(installed.id, installed.version)
+        }
+        val request = ++inspectionToken
+        checkButton.isEnabled = false
+        ncpButton.isEnabled = false
+        installNcpButton.isEnabled = false
+        manageNcpButton.isEnabled = false
+        profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
+        status.text = "Разрешение зависимостей и сохранение профиля…"
+
+        inspectionExecutor.execute {
+            val result = runCatching {
+                val game = when (val discovery = AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")) {
+                    is GameDiscoveryResult.Found -> discovery.fingerprint
+                    is GameDiscoveryResult.NotInstalled ->
+                        throw IllegalStateException("Minecraft \${discovery.packageName} не установлена")
+                    is GameDiscoveryResult.Unknown ->
+                        throw IllegalStateException("Не удалось проверить Minecraft: \${discovery.reason}")
+                }
+                val baseDigest = game.artifactDigests["base.apk"]
+                    ?: throw IllegalStateException("Не удалось получить SHA-256 установленного base.apk")
+                val currentBuild = org.neocraft.neomod.core.NcpGameBuildIdentity(
+                    game.packageName,
+                    game.versionCode,
+                    baseDigest,
+                )
+                val profileStore = NcpProfileStore(java.io.File(filesDir, "neomod"))
+                val existingIds = profileStore.listProfiles().map { it.profileId }.toSet()
+                val profileId = uniqueNeoModProfileId(displayName, existingIds)
+                val draft = org.neocraft.neomod.core.NcpProfileDraft(
+                    profileId = profileId,
+                    displayName = displayName,
+                    gameBuild = currentBuild,
+                    neoModApiVersion = CURRENT_NEOMOD_API_VERSION,
+                    requestedPackages = requests,
+                )
+                val packageStore = NcpPackageStore(java.io.File(filesDir, "neomod/ncp-store"))
+                val composition = org.neocraft.neomod.core.NcpProfileComposer.compose(draft, packageStore)
+                profileStore.save(composition.snapshot, composition.plan)
+            }
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed || request != inspectionToken) return@runOnUiThread
+                checkButton.isEnabled = true
+                ncpButton.isEnabled = true
+                installNcpButton.isEnabled = true
+                manageNcpButton.isEnabled = true
+                profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
+                result.onSuccess { snapshot ->
+                    status.text = "Профиль \${snapshot.displayName} сохранён. Активация не выполнялась."
+                    Toast.makeText(
+                        this,
+                        "Профиль \${snapshot.profileId} создан. Minecraft не изменялась.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    showNeoModProfiles()
+                }.onFailure { error ->
+                    status.text = "Не удалось создать профиль: \${error.message ?: error.javaClass.simpleName}"
+                }
+            }
+        }
+    }
+
+    private fun uniqueNeoModProfileId(displayName: String, existingIds: Set<String>): String {
+        val normalized = displayName.lowercase(java.util.Locale.ROOT)
+            .replace(Regex("[^a-z0-9]+"), "-")
+            .trim('-')
+        val base = normalized.take(48).trimEnd('-')
+            .takeIf { it.length >= 2 && it.first() in 'a'..'z' }
+            ?: "profile"
+        var candidate = base
+        var suffix = 2
+        while (candidate in existingIds) {
+            val ending = "-\${suffix}"
+            candidate = base.take(48 - ending.length).trimEnd('-') + ending
+            suffix++
+        }
+        return candidate
+    }
+
     private fun inspectNeoModProfile(profileId: String) {
         val request = ++inspectionToken
         checkButton.isEnabled = false
@@ -673,6 +887,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Проверка метаданных профиля ${profileId}…"
 
         inspectionExecutor.execute {
@@ -686,6 +901,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
                 result.onSuccess { snapshot ->
                     val details = buildString {
                         appendLine("ID: ${snapshot.profileId}")
@@ -752,6 +968,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Удаление метаданных профиля NeoMod…"
 
         inspectionExecutor.execute {
@@ -765,6 +982,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
                 result.onSuccess {
                     Toast.makeText(
                         this,
@@ -795,6 +1013,7 @@ class MainActivity : Activity() {
         installNcpButton.isEnabled = false
         manageNcpButton.isEnabled = false
         profilesButton.isEnabled = false
+        createProfileButton.isEnabled = false
         status.text = "Удаление NCP-пакета из приватного хранилища…"
         inspectionExecutor.execute {
             val result = runCatching {
@@ -807,6 +1026,7 @@ class MainActivity : Activity() {
                 installNcpButton.isEnabled = true
                 manageNcpButton.isEnabled = true
                 profilesButton.isEnabled = true
+                createProfileButton.isEnabled = true
                 result.onSuccess {
                     status.text = "Удалён ${installed.id} v${installed.version}. Minecraft не изменялась."
                 }.onFailure { error ->
