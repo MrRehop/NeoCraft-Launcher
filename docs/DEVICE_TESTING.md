@@ -1,8 +1,8 @@
 # Android device testing
 
-## Branch-head verification (checked 2026-11-26)
+## Branch-head verification (checked 2026-11-27)
 
-PR #1 remains open and in Draft state. The latest code-bearing commit dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5 is covered by GitHub Actions run #212, which passed all 150 self-test cases and Android :app:assembleDebug. The subsequent documentation-only commit 9b913e9e6c81ab727a4946502932d3f0b41be073 passed run #213. The verified build includes the read-only NeoMod profile browser and its confirmation-based metadata deletion action. Profile creation/editing, package selection, runtime activation, and Minecraft runtime compatibility are not implemented.
+PR #1 remains open and in Draft state. New code commit `ad52e836b199facb29b72cdd085b3c44826f1dc3` adds an Android profile-creation flow that uses `NcpProfileComposer`; CI status for this commit is not available from the current workflow query, so compilation and test execution are not confirmed. The latest verified Android build remains run #212 from commit `dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5`, which passed 150 self-test cases and `:app:assembleDebug` but predates profile creation. Profile editing, runtime activation, and Minecraft runtime compatibility remain unimplemented.
 
 ## Current PR-branch build
 
@@ -67,16 +67,16 @@ Download the safe [Hello World sample NCP package](https://raw.githubusercontent
 
 The picker stages the selected document in NeoCraft's private cache with a 128 MiB streaming cap. Validation and store operations run in the background. Installation extracts verified data into NeoCraft's private `files/neomod/ncp-store/packages` directory and rechecks the inventory and SHA-256 digests before commit. Package scripts, native libraries, and other executable content are not run or loaded into Minecraft. This is data storage only; it does not establish publisher authenticity, runtime isolation, or game compatibility.
 
-## Profile snapshot and profile-store core tests (host CI only)
+## Profile snapshot, profile store, and composer tests (host CI only)
 
-The branch currently includes 13 profile snapshot/game-build matcher self-test cases and 16 profile-store self-test cases in source. Run #208 passed all 29 cases, including the four integration tests for `load(profileId, plan, currentBuild)`. These are platform-neutral core tests and do not expose profile management in the Android UI.
+The branch includes 13 profile snapshot/game-build matcher cases, 16 profile-store cases, and 8 profile-composer cases in source. Run #208 passed the first 29 cases, including the four integration tests for `load(profileId, plan, currentBuild)`. The composer self-test task is present in the workflow, but its execution for commit `ad52e836b199facb29b72cdd085b3c44826f1dc3` is not confirmed.
 
 Coverage in the current source includes:
 - snapshot validation: ID/name/game identity/fingerprint, required resolved dependencies, dependency-first ordering, and duplicate requests;
 - game-build matching: exact package name, PackageManager versionCode, and APK SHA-256 match, plus explicit rejection of mismatches or malformed current identity;
 - profile storage: save/load, atomic replacement, invalid snapshot rejection, plan mismatch, corrupt/oversized record rejection, symlink rejection (including replaced profile-root symlink), scoped delete, and unsafe ID rejection.
 
-NcpProfileGameBuildMatcher is not yet connected to profile UI. The three-argument store load path composes it with package-plan validation and passed CI run #212. A future activation flow must supply the current installed-game identity and pass this check before offering activation. Profile creation, editing, package selection, dependency re-resolution in the UI, and activation remain unimplemented. The read-only browser and metadata deletion are compile-verified in run #212.
+NcpProfileGameBuildMatcher is not yet used by an activation UI. The three-argument store load path composes it with package-plan validation and passed CI run #212. A future activation flow must supply the current installed-game identity and pass this check before offering activation. The new profile-creation UI source selects one exact installed version per package ID, rechecks the current Minecraft identity at save time, resolves dependencies with `NcpProfileComposer`, and stores only profile metadata; commit `ad52e836b199facb29b72cdd085b3c44826f1dc3` is pending CI and device verification. Profile editing and activation remain unimplemented. The read-only browser and metadata deletion are compile-verified in run #212.
 
 ## Read-only NeoMod profile browser and metadata deletion (CI compile-verified; physical-device testing pending)
 
@@ -88,6 +88,19 @@ NcpProfileGameBuildMatcher is not yet connected to profile UI. The three-argumen
 6. Confirm the profile disappears from the list. The UI should state that only profile metadata was removed; installed NCP package data and Minecraft files are not modified.
 
 The browser calls listProfiles() and inspect(). It performs structural metadata validation only; it does not re-resolve dependencies or compare the saved game identity with the currently installed Minecraft build. Deletion calls NcpProfileStore.delete(profileId) after an explicit confirmation. It removes one .ncp-profile metadata file and does not uninstall referenced NCP packages or modify Minecraft. Profile creation, editing, package selection, and activation are not implemented.
+
+## Create a NeoMod profile (new source; CI/device verification pending)
+
+Do not expect this action in APK run #212: that verified APK predates commit `ad52e836b199facb29b72cdd085b3c44826f1dc3`. After a newer workflow run passes and a new APK is available:
+
+1. Install at least one trusted NCP package using **Установить NCP (только данные)**.
+2. Tap **Создать профиль NeoMod**. NeoCraft rechecks the installed Minecraft package and requires a readable SHA-256 digest for `base.apk`.
+3. Select one installed version per package ID. Mandatory dependencies are resolved automatically from a fresh integrity-checked package-store listing; optional dependencies are not auto-selected.
+4. Enter a display name and tap **Создать**.
+5. Open **Профили NeoMod (просмотр)** and inspect the saved snapshot. Confirm that its requested packages, dependency-first resolved list, Minecraft versionCode, and base.apk fingerprint are recorded.
+6. Confirm that profile creation only saves a `.ncp-profile` metadata file. It does not activate packages, execute package content, or modify Minecraft.
+
+The current UI supplies NeoMod API version `1.0.0`. If the installed game identity or base.apk digest cannot be read, creation must fail rather than saving an incomplete target identity. If a requested package version is no longer installed or a mandatory dependency cannot be resolved, creation must fail without saving a profile.
 
 ## Collect Minecraft diagnostics
 
