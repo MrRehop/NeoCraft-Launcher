@@ -2,6 +2,8 @@ package org.neocraft.neomod.core
 
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 private fun storeManifest(id: String, version: String, dependencies: List<NcpDependency> = emptyList()) =
     NcpManifest(id, id, "test", version, ">=1.0.0 <2.0.0", emptySet(), dependencies, emptyList(), emptySet(), emptyList(), emptyList(), emptyMap())
@@ -89,6 +91,45 @@ fun main() {
                 check(store.load("survival", plan) == replacement)
                 check(store.listProfiles().single().displayName == "Survival Updated")
             } finally {
+                root.deleteRecursively()
+            }
+        },
+        "create never overwrites an existing profile when store instances race" to {
+            val root = Files.createTempDirectory("ncp-profile-create-race-").toFile()
+            val executor = Executors.newFixedThreadPool(2)
+            try {
+                val firstStore = NcpProfileStore(root)
+                val secondStore = NcpProfileStore(root)
+                val plan = storePlan()
+                val first = storeSnapshot(plan, "Survival One")
+                val second = storeSnapshot(plan, "Survival Two")
+                val start = CountDownLatch(1)
+                val futures = listOf(
+                    executor.submit {
+                        start.await()
+                        runCatching { firstStore.create(first, plan) }
+                    },
+                    executor.submit {
+                        start.await()
+                        runCatching { secondStore.create(second, plan) }
+                    },
+                )
+                start.countDown()
+                val outcomes = futures.map { it.get() }
+                check(outcomes.count { it.isSuccess } == 1) {
+                    "exactly one concurrent create must succeed"
+                }
+                check(outcomes.count {
+                    (it.exceptionOrNull() as? NcpValidationException)?.code == "NCP_PROFILE_ALREADY_EXISTS"
+                } == 1) {
+                    "the losing create must report NCP_PROFILE_ALREADY_EXISTS"
+                }
+                val stored = firstStore.load("survival", plan)
+                check(stored.displayName == "Survival One" || stored.displayName == "Survival Two") {
+                    "the winning profile must remain intact"
+                }
+            } finally {
+                executor.shutdownNow()
                 root.deleteRecursively()
             }
         },
