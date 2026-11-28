@@ -837,7 +837,7 @@ class MainActivity : Activity() {
                 )
                 val packageStore = NcpPackageStore(java.io.File(filesDir, "neomod/ncp-store"))
                 val composition = org.neocraft.neomod.core.NcpProfileComposer.compose(draft, packageStore)
-                profileStore.save(composition.snapshot, composition.plan)
+                profileStore.create(composition.snapshot, composition.plan)
             }
 
             runOnUiThread {
