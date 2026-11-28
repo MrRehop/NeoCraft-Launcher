@@ -1,16 +1,18 @@
 # Android device testing
 
-## Branch-head verification (checked 2026-11-27)
+## Branch-head verification (checked 2026-11-28)
 
-PR #1 remains open and in Draft state. New code commit `ad52e836b199facb29b72cdd085b3c44826f1dc3` adds an Android profile-creation flow that uses `NcpProfileComposer`; CI status for this commit is not available from the current workflow query, so compilation and test execution are not confirmed. The latest verified Android build remains run #212 from commit `dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5`, which passed 150 self-test cases and `:app:assembleDebug` but predates profile creation. Profile editing, runtime activation, and Minecraft runtime compatibility remain unimplemented.
+PR #1 remains open and in Draft state. The Android profile-creation flow from commit `ad52e836b199facb29b72cdd085b3c44826f1dc3` is included in successful CI run #222. The latest verified branch-head build before the 2026-11-28 profile-ID fix is run #225, commit `5a302e2da29441ca02845c514857f998d61b7c40`; its self-test step, Android `:app:assembleDebug`, and artifact upload all succeeded. Artifact `neocraft-debug-apk` is available from run #225 (ZIP size 959,672 bytes; artifact ID 15204578544). Physical-device verification of profile creation is still pending.
+
+The 2026-11-28 change set extracts profile-ID generation into `NcpProfileIdGenerator`, fixes escaped Kotlin string interpolation in the profile-creation UI, and adds seven profile-ID self-tests to CI. Run #229 for commit `5ecb534b8df7b14824cd7dda86d97226055eb13c` is in progress; its result is not yet confirmed. Do not treat run #225's APK as containing these latest fixes. Profile editing, runtime activation, and Minecraft runtime compatibility remain unimplemented.
 
 ## Current PR-branch build
 
-The latest independently verified PR-branch Android debug build is GitHub Actions [run #212](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866), completed on 2026-11-26 from commit dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5.
+The latest independently verified PR-branch Android debug build before the 2026-11-28 profile-ID fix is GitHub Actions [run #225](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/46014744132), completed on 2026-11-27 from commit `5a302e2da29441ca02845c514857f998d61b7c40`.
 
-Artifact: [neocraft-debug-apk](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866/artifacts/15125156968), 950,953 bytes (artifact ZIP). SHA-256 of the artifact ZIP: a904e7ff10e660920c129862e23df12ca362c0c9ec217e0d4d32ec5f2a1450ab. It expires on 2027-02-24 at 14:08:58 UTC.
+Artifact: [neocraft-debug-apk](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/46014744132/artifacts/15204578544), 959,672 bytes (artifact ZIP). GitHub reports expiry on 2027-02-25. A SHA-256 for this artifact ZIP was not recorded in the workflow metadata.
 
-This is a Debug build from the unmerged `feature/ncp-package-reader` branch. GitHub job logs confirm that Android `:app:assembleDebug` succeeded and the following 12 self-test groups passed (150/150 cases total):
+This Debug build is from the unmerged `feature/ncp-package-reader` branch. The run's job steps confirm that the NeoMod self-test task, Android `:app:assembleDebug`, and artifact upload succeeded. It includes the Android profile-creation UI, but it predates the profile-ID generator/interpolation fixes committed on 2026-11-28.
 - NeoMod core: 14/14
 - legacy package reader: 14/14
 - package manager: 11/11
@@ -28,7 +30,7 @@ Run #208 includes the profile-root symlink regression test, exact game-build mat
 
 ## Install on the Samsung Android device
 
-1. Open the latest verified run #212 link above. Its APK is compile-verified for the package-store UI and profile-load core changes, but the UI still requires physical-device testing.
+1. Open the verified run #225 link above. Its APK includes the profile-creation UI and is compile-verified, but profile creation still requires physical-device testing. The later profile-ID fix is not in this APK.
 2. In **Artifacts**, download `neocraft-debug-apk`.
 3. Extract `app-debug.apk` from the downloaded ZIP.
 4. Tap the APK and allow installation for the file manager/browser if Android requests it.
@@ -91,7 +93,7 @@ The browser calls listProfiles() and inspect(). It performs structural metadata 
 
 ## Create a NeoMod profile (new source; CI/device verification pending)
 
-Do not expect this action in APK run #212: that verified APK predates commit `ad52e836b199facb29b72cdd085b3c44826f1dc3`. After a newer workflow run passes and a new APK is available:
+The profile-creation action is present in the verified APK from run #225. The additional profile-ID generator and interpolation fixes from 2026-11-28 require a newer successful run before they can be tested:
 
 1. Install at least one trusted NCP package using **Установить NCP (только данные)**.
 2. Tap **Создать профиль NeoMod**. NeoCraft rechecks the installed Minecraft package and requires a readable SHA-256 digest for `base.apk`.
