@@ -105,11 +105,11 @@ fun main() {
                 val second = storeSnapshot(plan, "Survival Two")
                 val start = CountDownLatch(1)
                 val futures = listOf(
-                    executor.submit {
+                    executor.submit<Result<NcpProfileSnapshot>> {
                         start.await()
                         runCatching { firstStore.create(first, plan) }
                     },
-                    executor.submit {
+                    executor.submit<Result<NcpProfileSnapshot>> {
                         start.await()
                         runCatching { secondStore.create(second, plan) }
                     },
