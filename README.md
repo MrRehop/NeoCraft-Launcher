@@ -10,18 +10,17 @@ The current NCP implementation and Android picker are being developed in [Pull R
 
 ## Latest verified PR-branch build
 
-- GitHub Actions [run #212](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866), commit dd2c0dd286eb9fab3ee66d8753bc0ad92369e2e5, completed successfully on 2026-11-26.
-- Artifact: [neocraft-debug-apk](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/45836074866/artifacts/15125156968), 950,953 bytes (workflow artifact ZIP). SHA-256: a904e7ff10e660920c129862e23df12ca362c0c9ec217e0d4d32ec5f2a1450ab. Artifact expires 2027-02-24 14:08:58 UTC.
-- CI used JDK 17 and Gradle 8.7. Android :app:assembleDebug completed successfully.
-- The run passed 12 self-test groups (150/150 cases): NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP version range 12/12; NCP ZIP reader 12/12; NCP package store 10/10; NCP dependency resolver 18/18; installed-package plan 7/7; profile snapshot/game-build matcher 13/13; profile store 16/16.
+- GitHub Actions [run #225](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/46014744132), commit `5a302e2da29441ca02845c514857f998d61b7c40`, completed successfully on 2026-11-27.
+- The job log confirms 13 self-test groups passed (158/158 cases): NeoMod core 14/14; legacy package reader 14/14; package manager 11/11; game-build identity 9/9; NCP manifest 14/14; NCP version range 12/12; NCP ZIP reader 12/12; NCP package store 10/10; NCP dependency resolver 18/18; installed-package plan 7/7; profile snapshot/game-build matcher 13/13; profile store 16/16; profile composer 8/8.
+- Android `:app:assembleDebug` and artifact upload succeeded. Artifact [neocraft-debug-apk](https://github.com/MrRehop/NeoCraft-Launcher/actions/runs/46014744132/artifacts/15204578544) is a 959,672-byte workflow ZIP; its SHA-256 is `4ff971b15d850ed0d88d363f44f0f294701d3426453c4ef89898b605e0652606`. It expires 2027-02-25 14:18:33 UTC.
+- Run #225 includes the initial Android profile-creation UI, but it predates the 2026-11-28 profile-ID generator/interpolation fixes and the later non-overwriting profile-create API. The current branch changes are not yet CI-verified, and the APK has not been tested on the physical Samsung device.
 - A minimal [Hello World NCP sample](./examples/hello-world.ncp) is included for device testing.
 - The Android NCP screen provides read-only validation, explicit data-only installation into NeoCraft private storage, listing, and uninstall. Stored packages are not activated or loaded into Minecraft.
 - The Android profile browser lists structurally valid saved profiles, displays stored metadata, and supports confirmation-based deletion of only the selected `.ncp-profile` file.
-- The Android UI source now includes an initial **Создать профиль NeoMod** flow (commit `ad52e836b199facb29b72cdd085b3c44826f1dc3`): it rechecks the installed Minecraft package and `base.apk` SHA-256, lets the user select one installed version per NCP package ID, resolves mandatory dependencies through `NcpProfileComposer`, and saves a metadata-only snapshot. The UI currently supplies NeoMod API version `1.0.0`. It does not activate packages or modify Minecraft. CI and physical-device verification for this new flow are pending.
-- `NcpProfileComposer` obtains a fresh integrity-checked package-store listing, resolves exact requested package versions and transitive mandatory dependencies, then returns a validated snapshot and plan for `NcpProfileStore.save()`. Its eight self-tests are configured in the Android workflow; execution for the new UI commit is not yet confirmed.
-- Run #212 compile-verifies the profile deletion UI. The Debug APK is from the unmerged feature/ncp-package-reader branch and has not been tested on the physical Samsung device.
-
-See [device testing](./docs/DEVICE_TESTING.md) for installation and manual checks.
+- The Android UI source includes **Создать профиль NeoMod**: it rechecks the installed Minecraft package and `base.apk` SHA-256, lets the user select one installed version per NCP package ID, resolves mandatory dependencies through `NcpProfileComposer`, and saves a metadata-only snapshot. It does not activate packages or modify Minecraft.
+- `NcpProfileComposer` obtains a fresh integrity-checked package-store listing, resolves exact requested package versions and transitive mandatory dependencies, then returns a validated snapshot and plan. New profiles are persisted through `NcpProfileStore.create()`, which rejects duplicate IDs; `save()` remains an explicit upsert. Eight composer self-tests passed in run #225.
+- `NcpProfileIdGenerator` has seven self-tests configured in the Android workflow. Its 2026-11-28 extraction and the later non-overwriting create API/test changes are not included in run #225; CI for those latest commits is not confirmed.
+- The current Debug APK is from the unmerged `feature/ncp-package-reader` branch. Physical-device verification is still pending.
 
 ## Current implementation boundaries
 
@@ -37,4 +36,4 @@ See [device testing](./docs/DEVICE_TESTING.md) for installation and manual check
 No in-game mod injection, native patching, or Minecraft modification is claimed.
 
 
-- The latest verified APK (run #212) includes the NCP data-only package-store UI, installed-package plan bridge, profile-root symlink protection, profile game-build matcher, read-only profile browser, and confirmation-based profile metadata deletion. It predates the new profile-creation UI source commit `ad52e836b199facb29b72cdd085b3c44826f1dc3`; editing and activation remain unimplemented.
+- The latest verified APK is run #225 (commit `5a302e2da29441ca02845c514857f998d61b7c40`). It includes the initial profile-creation UI but predates the 2026-11-28 profile-ID generator/interpolation changes and the subsequent non-overwriting profile-create API. The latest code commits have no confirmed CI result yet; profile editing and activation remain unimplemented.
