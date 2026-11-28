@@ -7,6 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -38,38 +39,69 @@ class NcpProfileStore(storageDirectory: File) {
         synchronized(lock) { ensureRoot() }
     }
 
+    /**
+     * Creates a new profile and refuses to replace an existing profile ID.
+     * Use this for user-initiated creation; [save] remains the explicit upsert API.
+     */
+    fun create(snapshot: NcpProfileSnapshot, plan: NcpInstalledPackagePlan): NcpProfileSnapshot =
+        synchronized(lock) {
+            writeSnapshotLocked(snapshot, plan, replaceExisting = false)
+        }
+
+    /** Atomically inserts or replaces a profile after validating its resolved package plan. */
     fun save(snapshot: NcpProfileSnapshot, plan: NcpInstalledPackagePlan): NcpProfileSnapshot =
         synchronized(lock) {
-            NcpProfileSnapshotValidator.validate(snapshot, plan)
-            ensureRoot()
-            val destination = profilePath(snapshot.profileId)
-            if (Files.exists(destination, LinkOption.NOFOLLOW_LINKS) && Files.isSymbolicLink(destination)) {
+            writeSnapshotLocked(snapshot, plan, replaceExisting = true)
+        }
+
+    /** Must be called while holding [lock]. */
+    private fun writeSnapshotLocked(
+        snapshot: NcpProfileSnapshot,
+        plan: NcpInstalledPackagePlan,
+        replaceExisting: Boolean,
+    ): NcpProfileSnapshot {
+        NcpProfileSnapshotValidator.validate(snapshot, plan)
+        ensureRoot()
+        val destination = profilePath(snapshot.profileId)
+        if (Files.exists(destination, LinkOption.NOFOLLOW_LINKS)) {
+            if (Files.isSymbolicLink(destination)) {
                 fail("NCP_PROFILE_STORE_INVALID", "profile destination must not be a symbolic link")
             }
-            val temp = root.resolve(".tmp-" + UUID.randomUUID())
-            var committed = false
-            try {
-                val bytes = encode(snapshot).toByteArray(StandardCharsets.UTF_8)
-                if (bytes.size > MAX_PROFILE_BYTES) {
-                    fail("NCP_PROFILE_STORE_LIMIT", "encoded profile exceeds size limit")
-                }
-                FileOutputStream(temp.toFile()).use { output ->
-                    output.write(bytes)
-                    output.fd.sync()
-                }
-                Files.move(temp, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-                committed = true
-                snapshot
-            } catch (error: NcpValidationException) {
-                throw error
-            } catch (error: AtomicMoveNotSupportedException) {
-                fail("NCP_PROFILE_STORE_IO", "filesystem does not support atomic profile replacement")
-            } catch (error: IOException) {
-                throw NcpValidationException("NCP_PROFILE_STORE_IO", "profile save failed: " + (error.message ?: "I/O error"))
-            } finally {
-                if (!committed) Files.deleteIfExists(temp)
+            if (!replaceExisting) {
+                fail("NCP_PROFILE_ALREADY_EXISTS", "profile ID is already in use")
             }
         }
+
+        val temp = root.resolve(".tmp-" + UUID.randomUUID())
+        var committed = false
+        try {
+            val bytes = encode(snapshot).toByteArray(StandardCharsets.UTF_8)
+            if (bytes.size > MAX_PROFILE_BYTES) {
+                fail("NCP_PROFILE_STORE_LIMIT", "encoded profile exceeds size limit")
+            }
+            FileOutputStream(temp.toFile()).use { output ->
+                output.write(bytes)
+                output.fd.sync()
+            }
+            if (replaceExisting) {
+                Files.move(temp, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+            } else {
+                Files.move(temp, destination, StandardCopyOption.ATOMIC_MOVE)
+            }
+            committed = true
+            return snapshot
+        } catch (error: NcpValidationException) {
+            throw error
+        } catch (_: FileAlreadyExistsException) {
+            fail("NCP_PROFILE_ALREADY_EXISTS", "profile ID is already in use")
+        } catch (_: AtomicMoveNotSupportedException) {
+            fail("NCP_PROFILE_STORE_IO", "filesystem does not support atomic profile replacement")
+        } catch (error: IOException) {
+            throw NcpValidationException("NCP_PROFILE_STORE_IO", "profile save failed: " + (error.message ?: "I/O error"))
+        } finally {
+            if (!committed) Files.deleteIfExists(temp)
+        }
+    }
 
     /**
      * Reads structurally valid profile metadata without asserting that its
