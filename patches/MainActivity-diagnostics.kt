@@ -702,9 +702,9 @@ class MainActivity : Activity() {
                 val game = when (val discovery = AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")) {
                     is GameDiscoveryResult.Found -> discovery.fingerprint
                     is GameDiscoveryResult.NotInstalled ->
-                        throw IllegalStateException("Minecraft \${discovery.packageName} не установлена")
+                        throw IllegalStateException("Minecraft ${discovery.packageName} не установлена")
                     is GameDiscoveryResult.Unknown ->
-                        throw IllegalStateException("Не удалось проверить Minecraft: \${discovery.reason}")
+                        throw IllegalStateException("Не удалось проверить Minecraft: ${discovery.reason}")
                 }
                 if (game.artifactDigests["base.apk"].isNullOrBlank()) {
                     throw IllegalStateException("Android не предоставил SHA-256 установленного base.apk")
@@ -727,14 +727,14 @@ class MainActivity : Activity() {
                 result.onSuccess { packages ->
                     showNcpProfilePackageSelection(packages)
                 }.onFailure { error ->
-                    status.text = "Невозможно создать профиль: \${error.message ?: error.javaClass.simpleName}"
+                    status.text = "Невозможно создать профиль: ${error.message ?: error.javaClass.simpleName}"
                 }
             }
         }
     }
 
     private fun showNcpProfilePackageSelection(packages: List<NcpPackageStore.InstalledPackage>) {
-        val labels = packages.map { "\${it.name} (\${it.id}) v\${it.version}" }.toTypedArray()
+        val labels = packages.map { "${it.name} (${it.id}) v${it.version}" }.toTypedArray()
         val checked = BooleanArray(packages.size)
 
         AlertDialog.Builder(this)
@@ -814,9 +814,9 @@ class MainActivity : Activity() {
                 val game = when (val discovery = AndroidGameDiscovery(this).inspect("com.mojang.minecraftpe")) {
                     is GameDiscoveryResult.Found -> discovery.fingerprint
                     is GameDiscoveryResult.NotInstalled ->
-                        throw IllegalStateException("Minecraft \${discovery.packageName} не установлена")
+                        throw IllegalStateException("Minecraft ${discovery.packageName} не установлена")
                     is GameDiscoveryResult.Unknown ->
-                        throw IllegalStateException("Не удалось проверить Minecraft: \${discovery.reason}")
+                        throw IllegalStateException("Не удалось проверить Minecraft: ${discovery.reason}")
                 }
                 val baseDigest = game.artifactDigests["base.apk"]
                     ?: throw IllegalStateException("Не удалось получить SHA-256 установленного base.apk")
@@ -827,7 +827,7 @@ class MainActivity : Activity() {
                 )
                 val profileStore = NcpProfileStore(java.io.File(filesDir, "neomod"))
                 val existingIds = profileStore.listProfiles().map { it.profileId }.toSet()
-                val profileId = uniqueNeoModProfileId(displayName, existingIds)
+                val profileId = org.neocraft.neomod.core.NcpProfileIdGenerator.createUnique(displayName, existingIds)
                 val draft = org.neocraft.neomod.core.NcpProfileDraft(
                     profileId = profileId,
                     displayName = displayName,
@@ -849,35 +849,18 @@ class MainActivity : Activity() {
                 profilesButton.isEnabled = true
                 createProfileButton.isEnabled = true
                 result.onSuccess { snapshot ->
-                    status.text = "Профиль \${snapshot.displayName} сохранён. Активация не выполнялась."
+                    status.text = "Профиль ${snapshot.displayName} сохранён. Активация не выполнялась."
                     Toast.makeText(
                         this,
-                        "Профиль \${snapshot.profileId} создан. Minecraft не изменялась.",
+                        "Профиль ${snapshot.profileId} создан. Minecraft не изменялась.",
                         Toast.LENGTH_LONG,
                     ).show()
                     showNeoModProfiles()
                 }.onFailure { error ->
-                    status.text = "Не удалось создать профиль: \${error.message ?: error.javaClass.simpleName}"
+                    status.text = "Не удалось создать профиль: ${error.message ?: error.javaClass.simpleName}"
                 }
             }
         }
-    }
-
-    private fun uniqueNeoModProfileId(displayName: String, existingIds: Set<String>): String {
-        val normalized = displayName.lowercase(java.util.Locale.ROOT)
-            .replace(Regex("[^a-z0-9]+"), "-")
-            .trim('-')
-        val base = normalized.take(48).trimEnd('-')
-            .takeIf { it.length >= 2 && it.first() in 'a'..'z' }
-            ?: "profile"
-        var candidate = base
-        var suffix = 2
-        while (candidate in existingIds) {
-            val ending = "-\${suffix}"
-            candidate = base.take(48 - ending.length).trimEnd('-') + ending
-            suffix++
-        }
-        return candidate
     }
 
     private fun inspectNeoModProfile(profileId: String) {
